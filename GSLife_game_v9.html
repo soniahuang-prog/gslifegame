@@ -1,0 +1,1797 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>廠區全能大師</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+*{font-family:'Noto Sans TC',sans-serif;box-sizing:border-box;}
+body{background:#f0f4f0;min-height:100vh;font-size:19px;}
+
+#login-screen{position:fixed;inset:0;z-index:200;background:#1f2937;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;}
+.login-card{background:#fff;border-radius:24px;padding:32px 24px;width:100%;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.login-input{width:100%;border:2px solid #e5e7eb;border-radius:12px;padding:13px 15px;font-size:1.1rem;font-weight:600;transition:border-color .15s;outline:none;}
+.login-input:focus{border-color:#2d6a4f;}
+.login-input.error{border-color:#f87171;background:#fef2f2;}
+.login-label{font-size:.95rem;font-weight:700;color:#6b7280;margin-bottom:4px;display:block;}
+select.login-input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;}
+
+.modal-overlay{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;padding:20px;overflow-y:auto;}
+.modal-overlay.show{display:flex;}
+.modal-card{background:#fff;border-radius:24px;padding:28px 22px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.4);max-height:90vh;overflow-y:auto;}
+
+.domain-tag{display:inline-flex;align-items:center;gap:6px;background:#e8f5e9;color:#1b5e20;border:1.5px solid #a5d6a7;border-radius:20px;padding:5px 14px;font-size:.95rem;font-weight:800;}
+.hint-box{background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:12px;padding:10px 14px;margin-top:8px;display:flex;flex-direction:column;gap:4px;}
+.hint-text{font-size:1rem;color:#1e40af;font-weight:600;}
+.hint-link{color:#1d4ed8;font-size:.95rem;font-weight:700;text-decoration:underline;}
+
+.progress-strip{display:flex;gap:4px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
+.pip{width:26px;height:26px;border-radius:50%;border:2.5px solid #ccc;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;transition:all .3s;}
+.pip-done{background:#2d6a4f;border-color:#2d6a4f;color:#fff;}
+.pip-locked{background:#f5f5f5;border-color:#ddd;color:#bbb;}
+
+.opt-card{background:#fff;border:2.5px solid #e0e8e0;border-radius:14px;padding:14px 17px;cursor:pointer;font-weight:600;font-size:1.08rem;display:flex;align-items:center;gap:12px;transition:all .15s;user-select:none;}
+.opt-card *{pointer-events:none;}
+.opt-card:hover:not(.opt-correct):not(.opt-wrong){border-color:#2d6a4f;background:#f0fdf4;}
+.opt-correct{border-color:#22c55e!important;background:#f0fdf4!important;color:#166534;}
+.opt-wrong{border-color:#f87171!important;background:#fef2f2!important;color:#991b1b;animation:shake .4s;}
+
+.trait-circle{width:22px;height:22px;border-radius:50%;border:2px solid #d1d5db;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:900;transition:all .2s;background:#fff;}
+.trait-circle.selected{background:#10b981;border-color:#10b981;color:#fff;}
+
+.step-card{background:#fff;border:2px solid #fed7aa;border-radius:14px;padding:14px 15px;cursor:grab;display:flex;align-items:flex-start;gap:10px;transition:all .2s;font-size:1rem;}
+.step-card:hover{border-color:#f97316;}
+.step-card.dragging{opacity:.3;}
+.step-card.dg-top{border-top:3px solid #f97316;}
+.step-card.dg-bot{border-bottom:3px solid #f97316;}
+.step-num{width:28px;height:28px;border-radius:50%;background:#f97316;color:#fff;font-weight:700;font-size:.8rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+.btn-primary{background:linear-gradient(135deg,#2d6a4f,#40916c);color:#fff;border:none;border-radius:12px;padding:13px 26px;font-weight:700;font-size:1.05rem;cursor:pointer;transition:transform .15s;box-shadow:0 4px 12px rgba(45,106,79,.3);}
+.btn-primary:hover{transform:scale(1.03);}
+.btn-secondary{background:#fff;color:#2d6a4f;border:2px solid #a7f3d0;border-radius:12px;padding:11px 22px;font-weight:700;font-size:1rem;cursor:pointer;transition:all .15s;}
+.btn-secondary:hover{background:#f0fdf4;}
+.btn-orange{background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;border:none;border-radius:12px;padding:13px 26px;font-weight:700;font-size:1.05rem;cursor:pointer;transition:transform .15s;box-shadow:0 4px 12px rgba(249,115,22,.3);}
+.btn-orange:hover{transform:scale(1.03);}
+.btn-red{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;border-radius:12px;padding:13px 26px;font-weight:700;font-size:1.05rem;cursor:pointer;transition:transform .15s;}
+.btn-red:hover{transform:scale(1.03);}
+
+.reward-bar{display:flex;align-items:center;gap:10px;background:#fffbeb;border:2px solid #fde68a;border-radius:14px;padding:10px 14px;}
+
+.lb-row{display:flex;align-items:center;gap:10px;background:#fff;border-radius:14px;padding:12px 14px;border:2px solid #e5e7eb;margin-bottom:8px;}
+.lb-rank{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.88rem;flex-shrink:0;}
+.rank-1{background:#fbbf24;color:#fff;}
+.rank-2{background:#9ca3af;color:#fff;}
+.rank-3{background:#b45309;color:#fff;}
+.rank-n{background:#f3f4f6;color:#6b7280;}
+.tier-badge{display:inline-block;border-radius:20px;padding:2px 8px;font-size:.72rem;font-weight:800;}
+.tier-legend{background:#d1fae5;color:#065f46;}
+.tier-small{background:#fef3c7;color:#92400e;}
+
+.screen{animation:fadeIn .3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@keyframes popIn{0%{transform:scale(.9)}65%{transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+.pop{animation:popIn .25s;}
+.pulse{animation:pulse 2s ease-in-out infinite;}
+</style>
+</head>
+<body>
+<script>
+document.addEventListener('contextmenu',e=>e.preventDefault());
+document.addEventListener('keydown',e=>{
+  if(e.key==='F12'||(e.ctrlKey&&e.shiftKey&&['I','J','C'].includes(e.key))||(e.ctrlKey&&e.key==='U'))e.preventDefault();
+});
+</script>
+
+<!-- ══ 請替換成你的 GAS URL ══ -->
+<script>const GAS_URL='https://script.google.com/macros/s/AKfycbx0BMWSkSOlifWAe1k0YCENvwAv2kwXKcPQmQZ0hdQIurtKMTaArKpQUkpujbZgbxq-2A/exec';</script>
+
+<!-- ══════ RULES MODAL ══════ -->
+<div id="rules-modal" class="modal-overlay" style="z-index:250;">
+  <div class="modal-card" style="max-width:500px;">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-black text-gray-800">📜 遊戲規則 &amp; 獎品說明</h2>
+      <button onclick="$('rules-modal').classList.remove('show')" class="text-gray-400 hover:text-gray-600 text-2xl font-bold leading-none">✕</button>
+    </div>
+
+    <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-4 text-sm leading-relaxed text-emerald-900">
+      <div class="font-black text-base mb-2">👋 歡迎來當廠區全能大師！！</div>
+      <p class="mb-2">透過 <strong>GS Life</strong> 讓你從廠區小白一路打怪升級，解鎖五大知識領域，挑戰自己對廠區的了解極限！準備好了嗎？</p>
+      <div class="mt-3 space-y-2">
+        <div class="flex items-start gap-2"><span class="text-lg">🌿</span><div><strong>花時間草知道</strong>：廠區裡藏著哪些植物？花語、特色、季節通通考你！</div></div>
+        <div class="flex items-start gap-2"><span class="text-lg">🔧</span><div><strong>羅萊巴伊智綺</strong>：DIY 修繕、省電妙招、廠區設備知識一網打盡！</div></div>
+        <div class="flex items-start gap-2"><span class="text-lg">✨</span><div><strong>清潔心淨環保</strong>：清潔撇步、環保意識、垃圾分類你都懂嗎？</div></div>
+        <div class="flex items-start gap-2"><span class="text-lg">🏠</span><div><strong>住房樂喜住房</strong>：世界建築、房產知識、生活空間冷知識大考驗！</div></div>
+        <div class="flex items-start gap-2"><span class="text-lg">🍳</span><div><strong>饗美食</strong>：員工私藏食譜、食材知識，吃貨必過關！</div></div>
+      </div>
+    </div>
+
+    <div class="space-y-3 mb-4">
+      <div class="bg-amber-50 border-2 border-amber-300 rounded-xl p-4">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-2xl">🥚</span>
+          <span class="font-black text-amber-800 text-base">5關完賽獎</span>
+        </div>
+        <p class="text-sm text-amber-700 leading-relaxed">完成 <strong>5 關</strong> 排行榜前 10 位的玩家，可獲得<strong>雞蛋糕等級</strong>禮物！<br><span class="text-xs text-amber-500">（是指等級，不是雞蛋糕本人哦！）</span></p>
+      </div>
+
+     <div class="bg-emerald-50 border-2 border-emerald-300 rounded-xl p-4">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-2xl">🍗</span><span class="text-2xl">🥤</span>
+          <span class="font-black text-emerald-800 text-base">10關完賽獎</span>
+        </div>
+        <p class="text-sm text-emerald-700 leading-relaxed">完成 <strong>10 關</strong> 排行榜前 10 位的玩家，可獲得<strong>雞排珍奶等級</strong>禮物！<br><span class="text-xs text-emerald-500">（是指等級，不是雞排珍奶本人哦！）</span></p>
+      </div>
+
+      <div class="bg-red-50 border-2 border-red-300 rounded-xl p-4">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-2xl">🎁</span>
+          <span class="font-black text-red-700 text-base">加碼神秘大禮！！</span>
+        </div>
+        <p class="text-sm text-red-700 leading-relaxed font-bold">時間最快的前三位英雄，才能帶走神秘大禮！🏆 速度就是你的武器！</p>
+      </div>
+    </div>
+
+    <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 mb-4">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="text-xl">📢</span>
+        <span class="font-black text-blue-900 text-base">玩家重要權益須知</span>
+      </div>
+      <ul class="text-sm text-blue-800 space-y-2 list-disc pl-5 font-medium">
+        <li>
+          <strong class="text-blue-950">強者不重複領獎：</strong>若同時進入 5 關與 10 關的前 10 名排行，<span class="text-red-600 font-bold">獎勵將自動升級、以「10關完賽獎」為主</span>，把雞蛋糕的機會留給更多人！
+        </li>
+        <li>
+          <strong class="text-blue-950">通關請截圖：</strong>請務必截圖保留通關畫面（不需主動傳給工作人員），若後續獎項發放有爭議時，才方便比對唷！
+        </li>
+      </ul>
+    </div>
+
+    <div class="text-xs text-gray-400 text-center mb-4">主辦單位保留活動最終解釋權利。</div>
+
+    <button class="btn-primary w-full py-3 text-base" onclick="$('rules-modal').classList.remove('show')">✅ 我了解了，開始挑戰！</button>
+  </div>
+</div>
+
+<!-- ══════ LOGIN ══════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="text-center mb-6">
+      <div class="text-5xl mb-3">🏭</div>
+      <h1 class="text-2xl font-black text-gray-800 mb-1">廠區全能大師</h1>
+      <p class="text-gray-500 text-sm mt-1">GS Life 廠區知識大挑戰</p>
+      <button class="btn-orange w-full mt-4 py-3 text-base" onclick="$('rules-modal').classList.add('show')">📜 查看遊戲規則 &amp; 獎品說明</button>
+    </div>
+    <div class="space-y-3 mb-5">
+      <div><label class="login-label">公司別 *</label><input id="l-company" class="login-input" placeholder="例：HE/HH/HTSI/AIBT......" maxlength="30"></div>
+      <div><label class="login-label">部門 *</label><input id="l-dept" class="login-input" placeholder="例：GS/HR/MFGENG/AP-3DI......" maxlength="30"></div>
+      <div><label class="login-label">工號 *</label><input id="l-empid" class="login-input" placeholder="例：98123" maxlength="20"></div>
+      <div><label class="login-label">英文名 *</label><input id="l-name" class="login-input" placeholder="例：David" maxlength="30"></div>
+      <div>
+        <label class="login-label">所在廠區 *</label>
+        <select id="l-site" class="login-input" onchange="handleSiteChange()">
+          <option value="">── 請選擇廠區 ──</option>
+          <option>PDC</option><option>展業</option><option>德安</option>
+          <option>竹南廣源</option><option>湖口</option><option>中科</option>
+          <option>南科</option><option>高雄</option><option value="其他">其他</option>
+        </select>
+      </div>
+      <div id="site-other-wrap" class="hidden">
+        <label class="login-label">請填寫廠區名稱 *</label>
+        <input id="l-site-other" class="login-input" placeholder="請輸入廠區名稱" maxlength="30">
+      </div>
+    </div>
+    <div id="login-err" class="text-red-500 text-sm font-bold text-center mb-3 hidden">請填寫所有欄位！</div>
+    <button class="btn-primary w-full py-4 text-lg" onclick="submitLogin()">⚔️ 我準備好了，出發！</button>
+  </div>
+</div>
+
+<!-- ══════ MILESTONE MODAL（5關分歧）══════ -->
+<div id="milestone-modal" class="modal-overlay">
+  <div class="modal-card text-center">
+    <div class="text-5xl mb-3 pulse">🎁</div>
+    <h2 class="text-xl font-black text-gray-800 mb-2">恭喜完成 5 關！</h2>
+    <p class="text-gray-500 text-sm mb-5">你已解鎖<strong class="text-amber-600">雞蛋糕等級禮</strong>！<br>現在要停下來領獎，還是繼續衝刺雞排珍奶等級禮？</p>
+    <div class="space-y-3">
+      <button class="btn-orange w-full py-3 text-base" onclick="chooseMilestone('stop')">🥚 累了累了玩到這邊就好，我要領取雞蛋糕等級禮物！</button>
+      <button class="btn-primary w-full py-3 text-base" onclick="chooseMilestone('continue')">🔥 開什麼玩笑當然繼續挑戰，拿雞排珍奶等級禮物！</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ LEADERBOARD MODAL ══════ -->
+<div id="lb-modal" class="modal-overlay">
+  <div class="modal-card" style="max-width:500px;">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-black text-gray-800">🏆 即時排行榜</h2>
+      <button onclick="$('lb-modal').classList.remove('show')" class="text-gray-400 hover:text-gray-600 text-2xl font-bold leading-none">✕</button>
+    </div>
+    <!-- 5關組 -->
+    <div style="background:#fef3c7;border:2px solid #fde68a;border-radius:14px;padding:10px 14px;margin-bottom:10px;text-align:center;">
+      <span style="font-weight:900;color:#92400e;font-size:1rem;">🥚 5關組 排行榜</span>
+      <div style="font-size:.75rem;color:#b45309;margin-top:2px;">雞蛋糕等級禮物 · 前20名</div>
+    </div>
+    <div id="lb-modal-list-5" class="space-y-2 mb-2"></div>
+    <div id="lb-modal-more-5-wrap" class="mb-4"></div>
+    <!-- 10關組 -->
+    <div style="background:#d1fae5;border:2px solid #a7f3d0;border-radius:14px;padding:10px 14px;margin-bottom:10px;text-align:center;">
+      <span style="font-weight:900;color:#065f46;font-size:1rem;">🍗 10關組 排行榜</span>
+      <div style="font-size:.75rem;color:#047857;margin-top:2px;">雞排珍奶等級禮物 · 前20名</div>
+    </div>
+    <div id="lb-modal-list-10" class="space-y-2 mb-2"></div>
+    <div id="lb-modal-more-10-wrap" class="mb-4"></div>
+    <button class="btn-secondary w-full mt-2" onclick="$('lb-modal').classList.remove('show')">關閉</button>
+  </div>
+</div>
+
+<!-- ══════ RESULT MODAL（結算彈窗）══════ -->
+<div id="result-modal" class="modal-overlay">
+  <div class="modal-card text-center">
+    <div id="result-modal-content"></div>
+  </div>
+</div>
+
+<!-- ══════ MAIN GAME ══════ -->
+<div id="main-game" class="hidden">
+  <div class="sticky top-0 z-50 bg-white shadow-sm px-4 py-3">
+    <div class="max-w-2xl mx-auto">
+      <!-- 計時器列 -->
+      <div style="background:linear-gradient(90deg,#1b4332,#2d6a4f);border-radius:10px;padding:6px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:8px;">
+        <span style="font-size:1rem;">⏱️</span>
+        <span style="color:#a7f3d0;font-size:.8rem;font-weight:700;">通關計時</span>
+        <span id="live-timer" style="color:#fff;font-size:1.1rem;font-weight:900;letter-spacing:2px;min-width:80px;text-align:center;">00:00</span>
+      </div>
+      <div class="flex items-center justify-between mb-2">
+        <div>
+          <h1 class="font-black text-gray-800 text-lg cursor-pointer hover:text-emerald-600 transition-colors" onclick="confirmGoHome()">🏭 廠區全能大師</h1>
+          <p id="header-user" class="text-xs text-gray-400 mt-0.5"></p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="openLbModal()" class="btn-secondary text-xs py-2 px-3 whitespace-nowrap">🏆 排行榜</button>
+          <div id="pip-strip" class="progress-strip"></div>
+        </div>
+      </div>
+      <div id="domain-tag-wrap" class="mb-2"></div>
+      <div class="reward-bar">
+        <span class="text-xl">🎁</span>
+        <div class="flex-1">
+          <div id="reward-text" class="text-sm font-bold text-amber-700">再完成 5 關即可領取小禮品！</div>
+          <div class="h-2 bg-amber-200 rounded-full mt-1 overflow-hidden">
+            <div id="rbar-fill" class="h-2 bg-amber-400 rounded-full transition-all duration-500" style="width:0%"></div>
+          </div>
+        </div>
+        <span id="reward-count" class="font-black text-amber-600 text-xl">0/10</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-2xl mx-auto px-4 pt-4 pb-4">
+    <div id="main-panel"></div>
+  </div>
+
+
+</div>
+
+<script>
+// ══════════════════════════════════════
+// 題庫
+// ══════════════════════════════════════
+
+// 第1~2題：單選（poem）── 誇張搞笑選項
+// warmup:true 表示這題一定會被排到第1關（暖身用），難度最低、選項最搞笑
+const QB_POEM = [
+  {
+    id: "QB_POEM_01",
+    question: "在羅萊巴修繕中，GS Life 網站提到誰雖然不會換喇叭鎖，但我們可以把握機會當個平凡百姓？",
+    answer: "脫逃大師哈利·胡迪尼",
+    decoys: ["發明大師湯瑪斯·愛迪生", "解碼大師亞倫·圖靈", "藝術大師李奧納多·達文西"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E7%BE%85%E8%90%8A%E5%B7%B4%E4%BC%8A%E6%99%BA%E7%B6%BA.aspx",
+    hint: "這是一位國際知名的傳奇脫逃大師，連鎖子都鎖不住他",
+    warmup: true
+  },
+  {
+    id: "QB_POEM_02",
+    question: "根據 GS Life 網站，儲熱式電熱水器若落實「待機關電」，一年約可節省多少錢？",
+    answer: "1,752 元",
+    decoys: ["1,200 元", "2,400 元", "3,650 元"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E7%BE%85%E8%90%8A%E5%B7%B4%E4%BC%8A%E6%99%BA%E7%B6%BA.aspx",
+    hint: "這個四位數是由 1、7、5、2 組成",
+    hard: true
+  },
+  {
+    id: "QB_POEM_03",
+    question: "台南二廠 4F 花園中，哪種植物的花語是「一見鍾情」？",
+    answer: "大鄧伯花",
+    decoys: ["巴西野牡丹", "藍星花", "馬櫻丹"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E8%8A%B1%E6%99%82%E9%96%93%E8%8D%89%E7%9F%A5%E9%81%93.aspx",
+    hint: "又名天空花，生命力極強且易栽培"
+  },
+  {
+    id: "QB_POEM_04",
+    question: "LED 燈泡標示 9W，每日使用 10 小時，耗電量是多少度？",
+    answer: "0.09 度",
+    decoys: ["0.9 度", "9 度", "90 度"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E7%BE%85%E8%90%8A%E5%B7%B4%E4%BC%8A%E6%99%BA%E7%B6%BA.aspx",
+    hint: "這是一個非常小的數字，小於 0.1 度",
+    hard: true
+  },
+  {
+    id: "QB_POEM_05",
+    question: "清潔隊員節是每年的哪一天？",
+    answer: "11 月 25 日",
+    decoys: ["10 月 25 日", "12 月 25 日", "9 月 25 日"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E6%B8%85%E6%BD%94%E5%BF%83%E6%B7%A8%E7%92%B0%E4%BF%9D.aspx",
+    hint: "日期在 11 月，且後面是一個由兩個相同數字組成的雙數日"
+  },
+  {
+    id: "QB_POEM_06",
+    question: "選用木頭專用螺絲時，長度應約為木板厚度的多少？",
+    answer: "4/3 厚",
+    decoys: ["1/2 厚", "2 倍厚", "3 倍厚"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E7%BE%85%E8%90%8A%E5%B7%B4%E4%BC%8A%E6%99%BA%E7%B6%BA.aspx",
+    hint: "分母為 3，分子比分母多 1，略大於 1 倍",
+    hard: true
+  },
+  {
+    id: "QB_POEM_07",
+    question: "哪種植物挺著顯眼的「啤酒肚」，在台南二廠環廠戶外可以看到？",
+    answer: "酒瓶椰子",
+    decoys: ["棍棒椰子", "大王椰子", "三角椰子"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E8%8A%B1%E6%99%82%E9%96%93%E8%8D%89%E7%9F%A5%E9%81%93.aspx",
+    hint: "它的形狀奇特就像酒瓶，花語更有「有酒當盡歡」的豪邁"
+  },
+  {
+    id: "QB_POEM_08",
+    question: "製作「麻婆豆腐」時，豬絞肉的備料重量是多少？",
+    answer: "150g",
+    decoys: ["250g", "350g", "500g"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/eat.aspx",
+    hint: "數字是一百五十，計量單位是克（g）",
+    hard: true
+  },
+  {
+    id: "QB_POEM_09",
+    question: "巴塞隆納被戲稱為「外星人巢穴」的傳奇建築是？",
+    answer: "米拉之家",
+    decoys: ["巴特婁之家", "奎爾公園", "聖家堂"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E4%BD%8F%E6%88%BF%E6%A8%82%E5%96%9C%E4%BD%8F%E6%88%BF.aspx",
+    hint: "這是大師高第的作品，屋頂上立著像外星武士的奇特煙囪"
+  },
+  {
+    id: "QB_POEM_10",
+    question: "台灣每人一年約莫丟棄多少個塑膠袋？",
+    answer: "384 個",
+    decoys: ["184 個", "584 個", "784 個"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E6%B8%85%E6%BD%94%E5%BF%83%E6%B7%A8%E7%92%B0%E4%BF%9D.aspx",
+    hint: "一個三位數，由 3、8、4 組成",
+    hard: true
+  },
+  {
+    id: "QB_POEM_11",
+    question: "哪種植物又名「臭臊草」，是漢方藥材中的「十藥」？",
+    answer: "魚腥草",
+    decoys: ["艾草", "車前草", "蒲公英"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E8%8A%B1%E6%99%82%E9%96%93%E8%8D%89%E7%9F%A5%E9%81%93.aspx",
+    hint: "雖然名字跟味道都很特殊，但它卻是靜謐與追憶的象徵"
+  },
+  {
+    id: "QB_POEM_12",
+    question: "去除水龍頭水垢時，白醋與水的混合比例是多少？",
+    answer: "1:1",
+    decoys: ["1:2", "1:3", "1:5"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E6%B8%85%E6%BD%94%E5%BF%83%E6%B7%A8%E7%92%B0%E4%BF%9D.aspx",
+    hint: "各取 100ml 進行等比例混合調配",
+    hard: true
+  },
+  {
+    id: "QB_POEM_13",
+    question: "1847 年完工的「鹽水八角樓」全棟骨架使用什麼木材？",
+    answer: "福州杉",
+    decoys: ["台灣紅檜", "肖楠木", "烏心石"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E4%BD%8F%E6%88%BF%E6%A8%82%E5%96%9C%E4%BD%8F%E6%88%BF.aspx",
+    hint: "這是一種頂級的中式木材，且全棟一根鐵釘都沒用"
+  },
+  {
+    id: "QB_POEM_14",
+    question: "處理水泥地板污漬時，過碳酸鈉濕敷需靜置多久？",
+    answer: "4-5 小時",
+    decoys: ["1-2 小時", "8-10 小時", "24 小時"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E6%B8%85%E6%BD%94%E5%BF%83%E6%B7%A8%E7%92%B0%E4%BF%9D.aspx",
+    hint: "時間長度大約在四到五個小時之間，效果最好",
+    hard: true
+  },
+  {
+    id: "QB_POEM_15",
+    question: "世界自行車日的日期為每年的哪一天？",
+    answer: "6 月 3 日",
+    decoys: ["5 月 3 日", "7 月 3 日", "4 月 3 日"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E6%B8%85%E6%BD%94%E5%BF%83%E6%B7%A8%E7%92%B0%E4%BF%9D.aspx",
+    hint: "這是一個慶祝結構簡單的兩輪夥伴的環保節日"
+  },
+  {
+    id: "QB_POEM_16",
+    question: "製作「雪藏綠豆糕」的基本備料中，綠豆仁需要幾公克？",
+    answer: "600 公克",
+    decoys: ["300 公克", "450 公克", "800 公克"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/eat.aspx",
+    hint: "數字為六百，等於傳統市場的一台斤分量",
+    hard: true
+  },
+  {
+    id: "QB_POEM_17",
+    question: "哪種植物的花語是「正直、堅韌」，且花季在 3-5 月？",
+    answer: "三色千年木",
+    decoys: ["朱蕉", "巴西鐵樹", "銀線龍舌蘭"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E8%8A%B1%E6%99%82%E9%96%93%E8%8D%89%E7%9F%A5%E9%81%93.aspx",
+    hint: "它位於 PDC 6F 花園，葉片細長如同出鞘的利劍"
+  },
+  {
+    id: "QB_POEM_18",
+    question: "車道螢幕顯示中，「E-tag 識別」成功的感應距離約為幾公尺？",
+    answer: "1 公尺",
+    decoys: ["3 公尺", "5 公尺", "10 公尺"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E7%BE%85%E8%90%8A%E5%B7%B4%E4%BC%8A%E6%99%BA%E7%B6%BA.aspx",
+    hint: "距離不長，建議放慢車速進入感應範圍最安全",
+    hard: true
+  },
+  {
+    id: "QB_POEM_19",
+    question: "蘭嶼地下屋屋前像巨型墓碑的「背靠石」，原文稱為什麼？",
+    answer: "Tagakal",
+    decoys: ["Vahay", "Tatala", "Makarama"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E4%BD%8F%E6%88%BF%E6%A8%82%E5%96%9C%E4%BD%8F%E6%88%BF.aspx",
+    hint: "這是達悟族人的露天客廳與靈魂倚靠處"
+  },
+  {
+    id: "QB_POEM_20",
+    question: "製作「田園烘蛋四重奏」時，每一層的烘烤時間是多久？",
+    answer: "15 分鐘",
+    decoys: ["5 分鐘", "10 分鐘", "20 分鐘"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/eat.aspx",
+    hint: "每一層都要確認完全沒有蛋液附著，才算真正熟透",
+    hard: true
+  },
+  {
+    id: "QB_POEM_21",
+    question: "哪種植物的花語是「安定、初心」，且花序長如鞭？",
+    answer: "長穗木",
+    decoys: ["垂柳", "串錢柳", "金露花"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E8%8A%B1%E6%99%82%E9%96%93%E8%8D%89%E7%9F%A5%E9%81%93.aspx",
+    hint: "它的花序由下而上緩緩綻放，是豐富的蜜源植物"
+  },
+  {
+    id: "QB_POEM_22",
+    question: "根據 GS Life 網站，全球近五成的水龍頭來自於台灣哪裡？",
+    answer: "彰化頂番婆",
+    decoys: ["台中大甲", "台南鹿耳門", "高雄岡山"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E7%BE%85%E8%90%8A%E5%B7%B4%E4%BC%8A%E6%99%BA%E7%B6%BA.aspx",
+    hint: "這地方在台灣中部，被國際譽為「水龍頭的故鄉」",
+    hard: true
+  },
+  {
+    id: "QB_POEM_23",
+    question: "維也納街頭哪棟建築的主張是「直線是惡魔的工具」？",
+    answer: "百水公寓",
+    decoys: ["霍夫堡皇宮", "美泉宮", "聖史蒂芬大教堂"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E4%BD%8F%E6%88%BF%E6%A8%82%E5%96%9C%E4%BD%8F%E6%88%BF.aspx",
+    hint: "傳奇建築師百水先生的浪漫原則，不准建築物出現 any 死板的直線"
+  },
+  {
+    id: "QB_POEM_24",
+    question: "節能標章中，藍色代表水質純淨，那金色代表什麼？",
+    answer: "最高品質的節水省能級別",
+    decoys: ["含有微量礦物質的高級水質", "經過高溫煮沸的純淨飲用水", "適合工業回收使用的水資源"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E7%BE%85%E8%90%8A%E5%B7%B4%E4%BC%8A%E6%99%BA%E7%B6%BA.aspx",
+    hint: "金色代表著水資源管理中的「高階精英」層次",
+    hard: true
+  },
+  {
+    id: "QB_POEM_25",
+    question: "哪種植物的花語是「優雅、上品、友情」，且球形花序形如「小手毬」？",
+    answer: "麻葉繡線菊",
+    decoys: ["臺灣繡線菊", "華南繡線菊", "玉山繡線菊"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E8%8A%B1%E6%99%82%E9%96%93%E8%8D%89%E7%9F%A5%E9%81%93.aspx",
+    hint: "花朵潔白如雪，到了秋天葉片會轉為美麗的橙黃色"
+  },
+  {
+    id: "QB_POEM_26",
+    question: "製作「爆炒透抽」時，透抽的備料重量是多少？",
+    answer: "400g",
+    decoys: ["200g", "300g", "500g"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/eat.aspx",
+    hint: "數字為四百，單位是克（g）",
+    hard: true
+  },
+  {
+    id: "QB_POEM_27",
+    question: "哪種植物的花語是「希望與美好」，且它的果實是綠繡眼的最愛？",
+    answer: "台灣山櫻",
+    decoys: ["艷紫荊", "阿勃勒", "鳳凰木"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E8%8A%B1%E6%99%82%E9%96%93%E8%8D%89%E7%9F%A5%E9%81%93.aspx",
+    hint: "花朵呈現緋紅色，綻放時會微微下垂，形狀像個精緻的小鐘"
+  },
+  {
+    id: "QB_POEM_28",
+    question: "電熱水器一天待機 18 小時，大約會耗電幾度？",
+    answer: "1.2 度",
+    decoys: ["0.5 度", "2.5 度", "4.8 度"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E7%BE%85%E8%90%8A%E5%B7%B4%E4%BC%8A%E6%99%BA%E7%B6%BA.aspx",
+    hint: "換算成電費大約只需要 4.8 元",
+    hard: true
+  },
+  {
+    id: "QB_POEM_29",
+    question: "「巴西野牡丹」在植物界被賦予了什麼優雅的稱呼？",
+    answer: "南美小公主",
+    decoys: ["紫金花仙子", "荒野女爵", "熱帶夜明珠"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E8%8A%B1%E6%99%82%E9%96%93%E8%8D%89%E7%9F%A5%E9%81%93.aspx",
+    hint: "這是一種披上了絲絨皇家紫、極具高貴感的花朵"
+  },
+  {
+    id: "QB_POEM_30",
+    question: "製作「白玉排骨酥湯」時，鹽的調味重量是多少？",
+    answer: "2g",
+    decoys: ["5g", "10g", "15g"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/eat.aspx",
+    hint: "這是一個非常小的個位數字，用來提味剛剛好",
+    hard: true
+  },
+  {
+    id: "QB_POEM_31",
+    question: "哪種植物又名「千層金」，且它的葉子帶有清新的檸檬香氣？",
+    answer: "黃金串錢柳",
+    decoys: ["垂柳", "雙翼豆", "楓香"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E8%8A%B1%E6%99%82%E9%96%93%E8%8D%89%E7%9F%A5%E9%81%93.aspx",
+    hint: "它位於 PDC 4F 花園，外觀呈現亮眼的金葉輕垂之姿"
+  },
+  {
+    id: "QB_POEM_32",
+    question: "燈泡色溫中，3000K 展現的是什麼光？",
+    answer: "偏黃光",
+    decoys: ["偏白光", "太陽淡白光", "正白光"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E7%BE%85%E8%90%8A%E5%B7%B4%E4%BC%8A%E6%99%BA%E7%B6%BA.aspx",
+    hint: "非常適用於茶水間或休息區，給同仁一種暖心溫馨的放鬆感",
+    hard: true
+  },
+  {
+    id: "QB_POEM_33",
+    question: "哪種植物的花語是「美滿、團聚」，且同時也是日本神戶市的市花？",
+    answer: "繡球花",
+    decoys: ["櫻花", "杜鵑花", "向日葵"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E8%8A%B1%E6%99%82%E9%96%93%E8%8D%89%E7%9F%A5%E9%81%93.aspx",
+    hint: "它又名八仙花、紫陽花，開花時一團團非常美麗"
+  },
+  {
+    id: "QB_POEM_34",
+    question: "製作「三杯雞」時，冰糖的備料基本量是多少？",
+    answer: "1 大匙",
+    decoys: ["3 大匙", "1/2 小匙", "2 大匙"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/eat.aspx",
+    hint: "分量不需要多，需要在熱鍋中慢慢炒至完全融化上色",
+    hard: true
+  },
+  {
+    id: "QB_POEM_35",
+    question: "哪種植物又名「英仔菜」，是兔子與鵝都非常喜愛的知名野菜？",
+    answer: "兔兒菜",
+    decoys: ["咸豐草", "龍葵", "昭和草"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E8%8A%B1%E6%99%82%E9%96%93%E8%8D%89%E7%9F%A5%E9%81%93.aspx",
+    hint: "雖然很補素，但它的花語是「幸福到處都有」"
+  },
+  {
+    id: "QB_POEM_36",
+    question: "燈泡色溫中，6500K 展現的是什麼光？",
+    answer: "偏白光",
+    decoys: ["偏黃光", "暖白光", "自然光"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E7%BE%85%E8%90%8A%E5%B7%B4%E4%BC%8A%E6%99%BA%E7%B6%BA.aspx",
+    hint: "非常適用於地下停車場，提供超明亮且清晰的視野",
+    hard: true
+  },
+  {
+    id: "QB_POEM_37",
+    question: "哪種植物又名「雨傘樹」，且最奇特的是一年會落葉三次？",
+    answer: "小葉欖仁樹",
+    decoys: ["大葉欖仁樹", "樟樹", "楓香樹"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E8%8A%B1%E6%99%82%E9%96%93%E8%8D%89%E7%9F%A5%E9%81%93.aspx",
+    hint: "它的枝幹極具層次感，花語是「靜謐的美麗」"
+  },
+  {
+    id: "QB_POEM_38",
+    question: "政府推動的「地籍異動即時通服務」，在申請時「不需要」下列哪一項材料？",
+    answer: "土地建物租賃契約書",
+    decoys: ["申請人的身分證正本", "土地或建物權狀影本", "依法登記的有效印鑑章"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E4%BD%8F%E6%88%BF%E6%A8%82%E5%96%9C%E4%BD%8F%E6%88%BF.aspx",
+    hint: "核心審查材料只需要能證明妳身分以及財產權屬的證明文件即可",
+    hard: true
+  },
+  {
+    id: "QB_POEM_39",
+    question: "哪種植物又名「瓊仔」，其原產地是中國？",
+    answer: "烏桕樹",
+    decoys: ["黃連木", "茄冬樹", "光臘樹"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E8%8A%B1%E6%99%82%E9%96%93%E8%8D%89%E7%9F%A5%E9%81%93.aspx",
+    hint: "每逢入秋葉片便會如同楓葉般轉紅，四季都在換裝展現風姿"
+  },
+  {
+    id: "QB_POEM_40",
+    question: "燈泡色溫中，4000K 展現的是什麼光？",
+    answer: "太陽淡白光（自然光）",
+    decoys: ["偏黃光", "正白光", "高亮冷白光"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E7%BE%85%E8%90%8A%E5%B7%B4%E4%BC%8A%E6%99%BA%E7%B6%BA.aspx",
+    hint: "這種色溫最適合辦公工作區，最接近自然光且不易讓眼睛疲勞",
+    hard: true
+  }
+];
+
+// 第3~8題：複選
+const QB_TRAIT = [
+  {
+    id: "QB_TRAIT_01",
+    plant: "百水公寓",
+    question: "根據 GS Life 介紹，下列哪些屬於「百水公寓」最著名的外觀與空間特色？（複選，答案限 2 個）",
+    traits: ["地板呈現自然起伏、不平整的線條", "建築內部完全沒有任何直線"],
+    wrongTraits: ["整棟建築外牆都是粉紅色玻璃帷幕", "門口裝有科技感十足的自動對講機"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E4%BD%8F%E6%88%BF%E6%A8%82%E5%96%9C%E4%BD%8F%E6%88%BF.aspx",
+    hint: "百水先生最討厭死板的「直線」，而且他喜歡讓「地板」像大自然一樣高低起伏！"
+  },
+  {
+    id: "QB_TRAIT_02",
+    plant: "螺絲長度原則",
+    question: "在進行居家修繕時，關於「鎖水泥牆」的螺絲長度原則，下列哪些敘述是正確的？（複選，答案限 2 個）",
+    traits: ["固定件長度為「物件厚度」加上「入牆深度」", "入牆深度建議至少要達到 1 英吋（約 2.54 公分）"],
+    wrongTraits: ["螺絲一定要選比大拇指粗的才算安全", "只要拿雙面膠帶貼一貼，不需要入牆深度"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E7%BE%85%E8%90%8A%E5%B7%B4%E4%BC%8A%E6%99%BA%E7%B6%BA.aspx",
+    hint: "水泥修繕要牢固，一定要算好「物件厚度＋入牆深度」，而且入牆的深度至少要有「1英吋」才抓得住！",
+    hard: true
+  },
+  {
+    id: "QB_TRAIT_03",
+    plant: "大鄧伯花",
+    question: "台南二廠 4F 花園中種植的「大鄧伯花」，下列哪些是它浪漫的植物特徵？（複選，答案限 2 個）",
+    traits: ["又名天空花", "花語是「一見鍾情」"],
+    wrongTraits: ["屬於一年生、無法越冬的草花", "聞起來有濃烈的樟腦丸味道"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E8%8A%B1%E6%99%82%E9%96%93%E8%8D%89%E7%9F%A5%E9%81%93.aspx",
+    hint: "抬頭看看它的藍紫色花朵，它有個跟宇宙有關的別名「天空花」，花語更是浪漫的「一見鍾情」！"
+  },
+  {
+    id: "QB_TRAIT_04",
+    plant: "儲熱式電熱水器",
+    question: "根據 GS Life 分享，如果想讓家裡的「儲熱式電熱水器」省電，下列哪兩個是官方認證的妙招？（複選，答案限 2 個）",
+    traits: ["加裝定時器，僅在固定洗澡時段加熱", "開啟「待機關電」落實隨手關機"],
+    wrongTraits: ["24 小時不間斷維持在最高溫沸騰狀態", "把熱水器水箱直接拆掉用瓦斯噴燈烤"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E7%BE%85%E8%90%8A%E5%B7%B4%E4%BC%8A%E6%99%BA%E7%B6%BA.aspx",
+    hint: "想省錢就要避免24小時反覆加熱！最經典的做法就是「加裝定時器」以及落實「待機關電」！",
+    hard: true
+  },
+  {
+    id: "QB_TRAIT_05",
+    plant: "世界自行車日",
+    question: "關於由聯合國大會通過的「世界自行車日」，下列哪些敘述是完全正確的？（複選，答案限 2 個）",
+    traits: ["日期為每年的 6 月 3 日", "旨在鼓勵使用結構簡單、可靠且環保的自行車"],
+    wrongTraits: ["它是為了紀念環法自由車賽奪冠者而設立的", "這一天全台灣的馬路都會全面禁止汽車行駛"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E6%B8%85%E6%BD%94%E5%BF%83%E6%B7%A8%E7%92%B0%E4%BF%9D.aspx",
+    hint: "請鎖定「年中 6 月的超前幾天（3日）」來慶祝，這個節日是為了推廣「簡單、環保、可靠」的雙輪夥伴！"
+  },
+  {
+    id: "QB_TRAIT_06",
+    plant: "過碳酸鈉頑垢處理",
+    question: "居家環境清潔中，使用「過碳酸鈉」濕敷法處理頑垢，下列哪些說法是完全正確的？（複選，答案限 2 個）",
+    traits: ["濕敷後建議靜置 4-5 小時效果最好", "可用於去除水泥地板等硬質表面的頑固污漬"],
+    wrongTraits: ["敷上去之後要等 5 年再把它擦掉", "它非常適合拿來洗臉當作去角質保養品"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E6%B8%85%E6%BD%94%E5%BF%83%E6%B7%A8%E7%92%B0%E4%BF%9D.aspx",
+    hint: "它是拿來處理「水泥地板」等硬質表面的污漬，敷上去後記得要耐心靜置「4-5小時」效果才完美，別拿來洗臉啊！",
+    hard: true
+  },
+  {
+    id: "QB_TRAIT_07",
+    plant: "酒瓶椰子",
+    question: "在台南二廠環廠戶外可以看到「酒瓶椰子」，下列關於它的外觀與文化哪些敘述正確？（複選，答案限 2 個）",
+    traits: ["因其基部肥大形似酒瓶而得名", "它的花語是「有酒當盡歡」"],
+    wrongTraits: ["成長速度極快，一個月就能長高 5 公尺", "原產於寒冷的北極圈"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E8%8A%B1%E6%99%82%E9%96%93%E8%8D%89%E7%9F%A5%E9%81%93.aspx",
+    hint: "它的外形基部胖胖的，就像個「酒瓶」，所以它的花語也非常豪爽地叫作「有酒當盡歡」！"
+  },
+  {
+    id: "QB_TRAIT_08",
+    plant: "麻婆豆腐核心",
+    question: "在製作經典中菜「麻婆豆腐」時，下列哪兩樣是決定成敗的核心調味與勾芡材料？（複選，答案限 2 個）",
+    traits: ["辣豆瓣醬", "太白粉水"],
+    wrongTraits: ["草莓果醬", "高濃度黑醋栗利口酒"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/eat.aspx",
+    hint: "麻婆豆腐不能甜甜的！要帶出靈魂的鹹香辣，必放「辣豆瓣醬」，最後還要淋上「太白粉水」進行完美勾芡！",
+    hard: true
+  },
+  {
+    id: "QB_TRAIT_09",
+    plant: "米拉之家",
+    question: "被稱為「外星人巢穴」的巴塞隆納傳奇建築「米拉之家」，下列哪些描述正確？（複選，答案限 2 個）",
+    traits: ["它是天才建築師高第（Antoni Gaudí）的經典作品", "屋頂立著許多形似外星武士的奇特煙囪"],
+    wrongTraits: ["它是全歐洲最大、最熱門的地下海鮮批發市場", "整棟建築是用純巧克力搭建而成的"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E4%BD%8F%E6%88%BF%E6%A8%82%E5%96%9C%E4%BD%8F%E6%88%BF.aspx",
+    hint: "這棟瘋狂的建築是西班牙大師「高第」的作品，它之所以被叫外星人巢穴，是因為「屋頂的煙囪」長得太像外星武士了！"
+  },
+  {
+    id: "QB_TRAIT_10",
+    plant: "環保與能耗意識",
+    question: "關於台灣每人的塑膠袋能耗與環境意識，下列哪些敘述符合 GS Life 的網頁分享？（複選，答案限 2 個）",
+    traits: ["台灣每人一年約莫丟棄 384 個塑膠袋", "自備環保購物袋是減少塑膠垃圾的最有效方式之一"],
+    wrongTraits: ["台灣目前已經完全沒有任何人使用塑膠袋了", "塑膠袋埋進土裡 3 秒鐘就會自動變成高級肥料"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E6%B8%85%E6%BD%94%E5%BF%83%E6%B7%A8%E7%92%B0%E4%BF%9D.aspx",
+    hint: "雖然很驚人，但台灣每人一年平均丟了「384個」塑膠袋！所以 GS Life 極力呼籲大家要「自備環保購物袋」！",
+    hard: true
+  },
+  {
+    id: "QB_TRAIT_11",
+    plant: "魚腥草",
+    question: "關於漢方藥材中被譽為「十藥」的「魚腥草」，下列植物敘述哪些正確？（複選，答案限 2 個）",
+    traits: ["又名「臭臊草」", "它的花語是「靜謐與追憶」"],
+    wrongTraits: ["它是世界上花朵最大的仙人掌植物", "葉子吃起來有濃郁的香草冰淇淋味道"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E8%8A%B1%E6%99%82%E9%96%93%E8%8D%89%E7%9F%A5%E9%81%93.aspx",
+    hint: "因為帶有特殊氣味，民間又叫它「臭臊草」，但它卻擁有非常優雅知性的花語「靜謐與追憶」！"
+  },
+  {
+    id: "QB_TRAIT_12",
+    plant: "水垢化學處理",
+    question: "清除水龍頭表面硬化的「頑固水垢」時，下列哪兩個操作是正確且利用了化學原理？（複選，答案限 2 個）",
+    traits: ["可以使用白醋與水以 1:1 的比例混合進行擦拭", "利用酸性特性能有效溶解主要由碳酸鈣組成的水垢"],
+    wrongTraits: ["必須倒入高濃度的工業強鹼溶液來融化水管", "用鐵鎚用力敲打水龍頭直到水垢震碎掉落"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E6%B8%85%E6%BD%94%E5%BF%83%E6%B7%A8%E7%92%B0%E4%BF%9D.aspx",
+    hint: "水垢是鹼性的碳酸鈣，所以我們要用「酸性特性」來溶解它！網頁推薦最天然的做法是拿「白醋與水 1:1」混合！",
+    hard: true
+  },
+  {
+    id: "QB_TRAIT_13",
+    plant: "鹽水八角樓",
+    question: "古蹟「鹽水八角樓」保存完好，下列關於這棟木構建築的傲人特色哪些敘述正確？（複選，答案限 2 個）",
+    traits: ["全棟骨架主要使用福州杉木材", "建築最狂之處在於全棟一根鐵釘都沒用，採榫接工法"],
+    wrongTraits: ["它是 2020 年由荷蘭設計師全新蓋好的現代摩天大樓", "地下室藏有巨型的古羅馬戰車競技場"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E4%BD%8F%E6%88%BF%E6%A8%82%E5%96%9C%E4%BD%8F%E6%88%BF.aspx",
+    hint: "它是純木造古蹟，核心骨架全是用高級的「福州杉」，更厲害的是全棟「一根鐵釘都沒用」，全靠榫接！"
+  },
+  {
+    id: "QB_TRAIT_14",
+    plant: "LED 燈耗能",
+    question: "關於省電燈具「LED 燈泡」與其能耗的計算，下列敘述哪些是正確的？（複選，答案限 2 個）",
+    traits: ["一顆標示 9W 的 LED 燈泡，每日使用 10 小時，日耗電量為 0.09 度", "1 度電的定義等於 1000 瓦·小時（Wh）"],
+    wrongTraits: ["燈泡瓦數越高，代表它每天消耗的電度數一定越少", "只要隨手關燈，電錶就會自動開始倒轉並且退錢給妳"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E7%BE%85%E8%90%8A%E5%B7%B4%E4%BC%8A%E6%99%BA%E7%B6%BA.aspx",
+    hint: "數學題來了！1度電就是「1000瓦·小時」，所以「9W 亮 10 小時」算下來剛好就是「0.09度」！",
+    hard: true
+  },
+  {
+    id: "QB_TRAIT_15",
+    plant: "清潔隊員節",
+    question: "每年的 10 月 25 日為「清潔隊員節」。設立這個溫馨節日的主要宗旨是哪些？（複選，答案限 2 個）",
+    traits: ["旨在彰顯清潔隊員對城市環境與職場整潔的默默奉獻", "提升基層環保工作者的社會地位與尊嚴"],
+    wrongTraits: ["強制規定所有不愛乾淨的員工留下來罰站", "慶祝垃圾車發明兩百週年的集體狂歡派對"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E6%B8%85%E6%BD%94%E5%BF%83%E6%B7%A8%E7%92%B0%E4%BF%9D.aspx",
+    hint: "這是一個感恩的節日，是為了感謝無名英雄們對整潔環境的「默默奉獻」，並藉此提升基層環保工作者的「地位與尊嚴」！"
+  },
+  {
+    id: "QB_TRAIT_16",
+    plant: "雪藏綠豆糕基礎",
+    question: "製作精緻點心「雪藏綠豆糕」時，下列哪兩樣是不可或缺的基礎靈魂備料？（複選，答案限 2 個）",
+    traits: ["綠豆仁（基本備料約 600 公克）", "植物油或奶油"],
+    wrongTraits: ["高山青茶茶葉", "老壇酸菜"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/eat.aspx",
+    hint: "它叫綠豆糕，最重要的原料當然是黃澄澄的「綠豆仁（600g）」，而且一定要加入「植物油或奶油」拌炒，口感才會綿密油潤！",
+    hard: true
+  },
+  {
+    id: "QB_TRAIT_17",
+    plant: "三色千年木",
+    question: "位於 PDC 6F 花園的「三色千年木」，下列關於它的外觀與生態特色哪些正確？（複選，答案限 2 個）",
+    traits: ["它的花語是「正直、堅韌」", "花季大約落在每年的 3-5 月"],
+    wrongTraits: ["它是長在海平面底下的紫色水草", "一年到頭都不需要曬太陽，完全長在黑暗中"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E8%8A%B1%E6%99%82%E9%96%93%E8%8D%89%E7%9F%A5%E9%81%93.aspx",
+    hint: "它長得筆直挺拔，花語就跟它的姿態一樣是「正直、堅韌」，如果想看它開花，記得在春季的「3-5月」去花園逛逛！"
+  },
+  {
+    id: "QB_TRAIT_18",
+    plant: "E-tag 識別規範",
+    question: "關於廠區進出車道的「E-tag 識別系統」安全規範，下列哪些敘述是完全正確的？（複選，答案限 2 個）",
+    traits: ["識別成功的黃金感應距離大約是 1 公尺", "車輛進出車道時，務必放慢車速以確保系統精準感應"],
+    wrongTraits: ["感應失敗時應立即加速衝撞前方白色柵欄", "車道可以容納兩台砂石車同時並排並以時速 100 競速"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E7%BE%85%E8%90%8A%E5%B7%B4%E4%BC%8A%E6%99%BA%E7%B6%BA.aspx",
+    hint: "廠區安全第一！開車進出請務必「放慢車速」，只要來到前方「1公尺」的黃金距離，系統就會自動秒感應！",
+    hard: true
+  },
+  {
+    id: "QB_TRAIT_19",
+    plant: "巴塞隆納外星人巢穴",
+    question: "被稱為「外星人巢穴」的巴塞隆納米拉之家，下列哪些描述符合 GS Life 的分享？（複選，答案限 2 個）",
+    traits: ["它是天才建築師高第（Antoni Gaudí）的經典作品", "屋頂立著許多形似外星武士的奇特煙囪"],
+    wrongTraits: ["它是全歐洲最大、最熱門的地下海鮮批發市場", "整棟建築是用純巧克力搭建而成的"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E4%BD%8F%E6%88%BF%E6%A8%82%E5%96%9C%E4%BD%8F%E6%88%BF.aspx",
+    hint: "這棟瘋狂的建築是西班牙大師「高第」的作品，它之所以被叫外星人巢穴，是因為「屋頂的煙囪」長得太像外星武士了！"
+  },
+  {
+    id: "QB_TRAIT_20",
+    plant: "烏桕樹",
+    question: "關於廠區植物「烏桕樹」，下列哪些屬於它在四季變換中的獨特姿態？（複選，答案限 2 個）",
+    traits: ["每逢入秋葉片便會如同楓葉般轉紅", "又名「瓊仔」，原產地是中國"],
+    wrongTraits: ["它會在冬天結出巨大的多汁大西瓜", "它的樹幹會分泌高純度的草莓果醬"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E8%8A%B1%E6%99%82%E9%96%93%E8%8D%89%E7%9F%A5%E9%81%93.aspx",
+    hint: "它又名「瓊仔」，最大的特點就是每逢入秋時，綠葉會像楓葉一樣「轉紅」，四季分明非常美麗！"
+  },
+  {
+    id: "QB_TRAIT_21",
+    plant: "黃金串錢柳",
+    question: "位於 PDC 4F 花園的「黃金串錢柳」，下列哪些屬於它的浪漫植物特徵？（複選，答案限 2 個）",
+    traits: ["又名「千層金」", "它的葉子帶有清新的檸檬香氣"],
+    wrongTraits: ["只要對它唱歌，它就會從樹上掉下真的新台幣硬幣", "屬於多肉植物的一種，葉片肥厚像仙人掌"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E8%8A%B1%E6%99%82%E9%96%93%E8%8D%89%E7%9F%A5%E9%81%93.aspx",
+    hint: "它在植物界又有個很富貴的稱呼叫「千層金」，如果妳走近揉揉它的葉子，會聞到療癒的「檸檬香氣」！"
+  },
+  {
+    id: "QB_TRAIT_22",
+    plant: "長穗木",
+    question: "關於廠區植物「長穗木」，下列哪些敘述是完全正確的？（複選，答案限 2 個）",
+    traits: ["它的花語是「安定、初心」", "花序長如鞭，由下而上緩緩綻放"],
+    wrongTraits: ["花季只有 3 秒鐘，一閃即逝", "果實可以用來提煉高純度的飛機燃料"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E8%8A%B1%E6%99%82%E9%96%93%E8%8D%89%E7%9F%A5%E9%81%93.aspx",
+    hint: "它的花序非常特別，像一根長長的「鞭子」一樣由下往上開，而它的花語也非常沉穩，叫做「安定、初心」！"
+  },
+  {
+    id: "QB_TRAIT_23",
+    plant: "麻葉繡線菊",
+    question: "關於花形如「小手毬」的「麻葉繡線菊」，下列哪些敘述符合 GS Life 的植物誌分享？（複選，答案限 2 個）",
+    traits: ["它的花語是「優雅、上品、友情」", "花朵潔白如雪，到了秋天葉片會轉為美麗的橙黃色"],
+    wrongTraits: ["它只能生長在零下 100 度的南極冰原上", "開花時會發出小狗汪汪叫的聲音"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E8%8A%B1%E6%99%82%E9%96%93%E8%8D%89%E7%9F%A5%E9%81%93.aspx",
+    hint: "它開花時整片潔白如雪、非常「優雅上品」，到了秋天它的綠葉還會換裝，轉變成溫暖的「橙黃色」！"
+  },
+  {
+    id: "QB_TRAIT_24",
+    plant: "地籍異動即時通",
+    question: "政府推動的「地籍異動即時通服務」能有效防止房地產詐騙。關於此服務，下列哪些說法正確？（複選，答案限 2 個）",
+    traits: ["申請時不需要提供「土地建物租賃契約書」", "當名下財產被申請異動時，系統會第一時間簡訊或電郵通知所有權人"],
+    wrongTraits: ["開通這個服務需要每個月繳交 50 萬元的系統維護費", "申請成功後，名下的房子會自動變成純金打造的"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E4%BD%8F%E6%88%BF%E6%A8%82%E5%96%9C%E4%BD%8F%E6%88%BF.aspx",
+    hint: "這是一項完全免費的便民防詐防禦機制！當妳的不動產被申請移轉或變更時，系統會「第一時間傳簡訊或電郵」通知妳！",
+    hard: true
+  },
+  {
+    id: "QB_TRAIT_25",
+    plant: "燈泡色溫大師",
+    question: "居家與廠區照明規劃中，關於「色溫（K值）」的應用，下列哪兩個搭配符合官方推薦的舒適度？（複選，答案限 2 個）",
+    traits: ["茶水間與休息區：選用偏黃光（3000K）營造暖心放鬆感", "辦公工作區：選用太陽淡白光（4000K）提供自然不易疲勞的視野"],
+    wrongTraits: ["為了在辦公室睡得更香，建議把所有開會區都換成迪斯可彩色霓虹閃爍燈光", "地下停車場為了省電，建議完全不裝燈泡改發給每位同仁一根火柴"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E7%BE%85%E8%90%8A%E5%B7%B4%E4%BC%8A%E6%99%BA%E7%B6%BA.aspx",
+    hint: "規劃照明要適所適用！最溫馨的「茶水間」適合暖暖的「黃光（3000K）」，需要專注的「辦公區」則適合最自然的「淡白光（4000K）」！",
+    hard: true
+  },
+  {
+    id: "QB_TRAIT_26",
+    plant: "百水公寓浪漫哲學",
+    question: "維也納街頭最著名的「百水公寓」，關於其傳奇建築師百水先生的設計哲學，下列哪些正確？（複選，答案限 2 個）",
+    traits: ["他主張「直線是惡魔的工具」", "建築物內的窗戶都擁有各自的自由，大小形狀完全由居民決定"],
+    wrongTraits: ["他堅持全棟大樓必須使用純鋼筋玻璃打造出完美的正方形幾何魔術方塊", "他規定居民每天出門只能走路，禁止搭乘電梯與任何公共運輸"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E4%BD%8F%E6%88%BF%E6%A8%82%E5%96%9C%E4%BD%8F%E6%88%BF.aspx",
+    hint: "百水先生是浪漫的自然主義者，他最著名的名言就是「直線是惡魔的工具」，而且他認為「窗戶是有自由的」，所以每扇窗都長得不一樣！"
+  },
+  {
+    id: "QB_TRAIT_27",
+    plant: "田園烘蛋四重奏",
+    question: "製作精緻料理「田園烘蛋四重奏」時，下列關於烘烤與備料的關鍵操作哪些是正確的？（複選，答案限 2 個）",
+    traits: ["每一層的烘烤時間約為 15 分鐘", "烘烤過程中必須確認完全沒有蛋液附著，才算真正熟透"],
+    wrongTraits: ["必須加入大量可樂與珍珠奶茶進行調味", "烘烤前要把烤箱溫度設定在 3000 度直到烤箱融化"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/eat.aspx",
+    hint: "因為它是美麗的「四重奏」分層烘烤，所以「每一層都要烤 15 分鐘」，並且要細心確認「完全沒有蛋液附著」才能疊上下一層！",
+    hard: true
+  },
+  {
+    id: "QB_TRAIT_28",
+    plant: "節能標章秘密",
+    question: "在選購省水與節能家電時，關於官方認證標章的顏色分級，下列哪些敘述完全符合規範？（複選，答案限 2 個）",
+    traits: ["藍色代表水質純淨與省水效率", "金色代表最高品質的節水省能級別"],
+    wrongTraits: ["紫色代表這個家電運轉時會發出紫光", "黑色代表這個電器用起來非常耗電，隨時會爆炸"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E7%BE%85%E8%90%8A%E5%B7%B4%E4%BC%8A%E6%99%BA%E7%B6%BA.aspx",
+    hint: "標章顏色大有學問！「藍色」就是象徵純淨水資源與省水，而站在金字塔頂端、象徵「最高品質級別」的則是閃亮的「金色」！",
+    hard: true
+  },
+  {
+    id: "QB_TRAIT_29",
+    plant: "爆炒透抽技巧",
+    question: "在製作大廚極致料理「爆炒透抽」時，下列哪些屬於 GS Life 分享的完美備料與調味？（複選，答案限 2 個）",
+    traits: ["透抽的備料重量基準為 400g", "炒香時可以使用大蒜、蔥段、辣椒做為基礎爆香三寶"],
+    wrongTraits: ["透抽不需要洗，直接整隻丟進冰淇淋桶裡醃製", "調味時要倒入一整罐感冒糖漿來提味"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/eat.aspx",
+    hint: "美味海鮮備料要精準！透抽的分量請抓「400g」，爆炒時最正宗的做法就是使用「大蒜、蔥段、辣椒」爆香，香氣逼人！",
+    hard: true
+  },
+  {
+    id: "QB_TRAIT_30",
+    plant: "台灣山櫻傳奇",
+    question: "關於在冬春之際傲然綻放的「台灣山櫻」，下列關於它的植物特色哪些敘述是正確的？（複選，答案限 2 個）",
+    traits: ["花朵呈現緋紅色，綻放時會微微下垂如精緻的小鐘", "它的果實是綠繡眼等鳥類最愛的天然美食"],
+    wrongTraits: ["它屬於仙人掌科，全身長滿尖銳的長刺", "它的花朵只在半夜 12 點綻放，且 1 秒鐘後就會自動融化"],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E8%8A%B1%E6%99%82%E9%96%93%E8%8D%89%E7%9F%A5%E9%81%93.aspx",
+    hint: "它是台灣本土最美的緋紅仙子！花朵盛開時像一排「微微下垂的精緻小鐘」，而且它結出的美味果實更是「綠繡眼等小鳥的最愛」！"
+  }
+];
+
+
+// 第9~10題：排序
+const QB_SORT = [
+  {
+    id: "QB_SORT_01",
+    title: "辦公區與廠區最佳照明規劃",
+    question: "根據 GS Life 網站分享的「辦公區與廠區最佳照明規劃」，請將下列三種空間推薦使用的色溫，依照「K值由低到高」進行排序：",
+    steps: [
+      { id: "S1", text: "茶水間與休息區（暖心偏黃光 3000K）" },
+      { id: "S2", text: "辦公工作區（自然淡白光 4000K）" },
+      { id: "S3", text: "地下停車場（明亮清晰白光 6500K）" }
+    ],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E7%BE%85%E8%90%8A%E5%B7%B4%E4%BC%8A%E6%99%BA%E7%B6%BA.aspx",
+    hint: "數字大小一目了然！最溫馨的黃光數字最小（3000），接著是辦公自然光（4000），最明亮的白光數字最大（6500）！"
+  },
+  {
+    id: "QB_SORT_02",
+    title: "經典中菜「三杯雞」烹飪五步驟",
+    question: "在製作經典中菜「三杯雞」時，為了完美鎖住肉汁並收乾醬汁，請依據正確的烹飪先後順序進行排序：",
+    steps: [
+      { id: "S1", text: "將雞肉切塊洗淨，入熱鍋乾煸至表面金黃、逼出油脂" },
+      { id: "S2", text: "加入黑麻油、老薑片、大蒜煸炒出濃厚香氣" },
+      { id: "S3", text: "倒入米酒、醬油、冰糖，大火煮開後轉小火燜燒入味" },
+      { id: "S4", text: "大火收汁，至醬汁呈現濃稠包裹在雞肉表面" },
+      { id: "S5", text: "起鍋前關火，投入靈魂九層塔快速翻炒利用餘溫激發香氣" }
+    ],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/eat.aspx",
+    hint: "烹飪心法：先乾煸雞肉逼油 ➔ 再用麻油爆香 ➔ 倒醬汁燜燒 ➔ 大火把汁收乾 ➔ 最後起鍋前才放九層塔，九層塔絕對不能太早放否則會變黑！"
+  },
+  {
+    id: "QB_SORT_03",
+    title: "防範房地產詐騙：地籍異動即時通申請流程",
+    question: "為了保護個人資產，政府推動了「地籍異動即時通服務」。請依據正確的服務生效與防禦防護機制先後順序進行排序：",
+    steps: [
+      { id: "S1", text: "準備好身分證正本與權狀影本，向地政事務所提出申請開通服務" },
+      { id: "S2", text: "當未來名下不動產被申請買賣、移轉或設定抵押時，系統在第一時間觸發防禦機制" },
+      { id: "S3", text: "系統主動傳送即時簡訊或電子郵件通知所有權人，讓詐騙集團無所遁形" }
+    ],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E4%BD%8F%E6%88%BF%E6%A8%82%E5%96%9C%E4%BD%8F%E6%88%BF.aspx",
+    hint: "保護資產三步驟！首先我們必須自己帶齊證件去「申請開通服務」，接著當哪天財產有「異動被觸發」時，系統最後才會「主動傳簡訊通知妳」，達到完美防詐！"
+  },
+  {
+    id: "QB_SORT_04",
+    title: "觀賞植物開花形態分類",
+    question: "花序的形態各有巧妙不同。請將下列三種觀賞植物，依照其開花時的「花序構造外觀與形態（線狀或穗狀 ➔ 圓球狀聚集成團 ➔ 微微下垂的鐘形）」進行排序：",
+    steps: [
+      { id: "S1", text: "長穗木（擁有長如鞭子、由下而上緩緩綻放的「長穗狀花序」）" },
+      { id: "S2", text: "繡球花（開花時一團團圓滿聚集成球，又名「八仙花、紫陽花」）" },
+      { id: "S3", text: "台灣山櫻（開花時花朵呈現緋紅色、形狀像個精緻且微微下垂的「小鐘」）" }
+    ],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E8%8A%B1%E6%99%82%E9%96%93%E8%8D%89%E7%9F%A5%E9%81%93.aspx",
+    hint: "對照題目提示的形狀順序：先找出像鞭子一樣長長的「穗狀」（長穗木），接著是圓圓胖胖的「球狀」（繡球花），最後是像吊鐘一樣下垂的（台灣山櫻）！"
+  },
+  {
+    id: "QB_SORT_05",
+    title: "居家維修：水泥牆面打眼與螺絲鎖固工程",
+    question: "在進行居家修繕、要在堅硬的水泥牆面懸掛重物時，請依照正確的標準施工作業流程進行排序：",
+    steps: [
+      { id: "S1", text: "使用電鑽切換至衝擊模式，在牆面上精準鑽出垂直的孔洞" },
+      { id: "S2", text: "將符合孔洞大小的塑膠壁虎（膨脹螺絲套管）用鐵鎚完全敲入牆面孔洞中" },
+      { id: "S3", text: "將要懸掛的物件對準孔洞，使用螺絲起子將木頭專用螺絲鎖入壁虎中直到緊實" }
+    ],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E7%BE%85%E8%90%8A%E5%B7%B4%E4%BC%8A%E6%99%BA%E7%B6%BA.aspx",
+    hint: "水電工基本功！一定要先用電鑽「在牆上鑽洞」，洞好了之後把「壁虎敲進去」，最後才能把「螺絲鎖進壁虎裡」，這樣才鎖得牢！"
+  },
+  {
+    id: "QB_SORT_06",
+    title: "精緻點心「雪藏綠豆糕」製作工藝",
+    question: "在製作口感綿密細緻、入口即化的「雪藏綠豆糕」時，請依照傳統點心師傅的標準工藝流程進行排序：",
+    steps: [
+      { id: "S1", text: "將綠豆仁徹底洗淨並完全蒸熟，趁熱壓製成細緻無顆粒的綠豆泥" },
+      { id: "S2", text: "將綠豆泥放入鍋中，加入精準比例的植物油或奶油拌炒至油潤吸附" },
+      { id: "S3", text: "將炒好的綠豆泥均勻揉圓，使用精緻模具壓製成型，放入冰箱冷藏定型後即可享用" }
+    ],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/eat.aspx",
+    hint: "美味需要耐心！先將綠豆仁「蒸熟並壓成泥」，接著「下鍋跟油拌炒」到滑順，最後才是「用模具壓成型並冰鎮」，順序錯了綠豆糕就散掉囉！"
+  },
+  {
+    id: "QB_SORT_07",
+    title: "水龍頭頑固水垢清除三部曲",
+    question: "水龍頭用久了會積滿石灰質水垢。請依照利用化學原理進行「無損除垢」的標準清潔流程進行排序：",
+    steps: [
+      { id: "S1", text: "將白醋與純水以 1:1 的完美比例調配混合" },
+      { id: "S2", text: "拿紙巾吸飽混合液，緊密包裹濕敷在水龍頭結垢表面，靜置讓酸性充分溶解碳酸鈣" },
+      { id: "S3", text: "取下紙巾，用清水完全沖洗乾淨並用乾布擦乾，水龍頭即可恢復亮麗如新" }
+    ],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E6%B8%85%E6%BD%94%E5%BF%83%E6%B7%A8%E7%92%B0%E4%BF%9D.aspx",
+    hint: "大掃除妙招！先「調配 1:1 白醋水」，然後「用乾淨紙巾濕敷包裹」在水龍頭上，最後拿下來「清水沖洗並擦乾」，水垢瞬間消失！"
+  },
+  {
+    id: "QB_SORT_08",
+    title: "台灣古蹟建築文化歷史演進",
+    question: "台灣擁有豐富的多元建築文化。請將下列三個在 GS Life 中分享的北中南經典建築與古蹟，依照其「歷史完工或興建年代（由遠到近）」進行排序：",
+    steps: [
+      { id: "S1", text: "台南鹽水八角樓（全棟骨架使用福州杉，無釘榫接，建於西元 1847 年）" },
+      { id: "S2", text: "蘭嶼傳統地下屋（為了抵禦颱風與高溫、深埋於地下的達悟族智慧結晶）" },
+      { id: "S3", text: "西班牙巴塞隆納米拉之家（高第大師驚世之作，完工於西元 1912 年）" }
+    ],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E4%BD%8F%E6%88%BF%E6%A8%82%E5%96%9C%E4%BD%8F%E6%88%BF.aspx",
+    hint: "看準年份！清朝道光年間蓋好的「鹽水八角樓（1847年）」歷史最悠久，接著是原住民遠古流傳的智慧地下屋，最後才是歐洲二十世紀初的「米拉之家（1912年）」！"
+  },
+  {
+    id: "QB_SORT_09",
+    title: "儲熱式電熱水器智能省電全攻略",
+    question: "為了幫家裡省下大筆電費，請依照「硬體設定 ➔ 每日節電習慣 ➔ 最終省電成果統計」的邏輯順序，將下列電熱水器省電攻略進行排序：",
+    steps: [
+      { id: "S1", text: "為電熱水器加裝定時器，設定僅在每天夜間全家人固定的洗澡時段內進行加熱" },
+      { id: "S2", text: "洗完澡後，隨手開啟「待機關電」開關，落實不洗澡就不反覆待機加熱的習慣" },
+      { id: "S3", text: "一年下來成功省下待機耗電，結算幫荷包省下高達 1,752 元的電費" }
+    ],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E7%BE%85%E8%90%8A%E5%B7%B4%E4%BC%8A%E6%99%BA%E7%B6%BA.aspx",
+    hint: "依照題目要求的邏輯：第一步是做硬體升級「加裝定時器」，第二步是日常習慣「落實待機關電」，最後第三步就是享受開心的「省下 1,752 元」成果！"
+  },
+  {
+    id: "QB_SORT_10",
+    title: "低碳環保綠生活實踐指南",
+    question: "實踐低碳生活非常簡單。請依照日常生活「從白天出門通勤 ➔ 購物環保 ➔ 年終環保節日」的時間邏輯，將下列綠生活實踐指南進行排序：",
+    steps: [
+      { id: "S1", text: "響應 6/3 世界自行車日，多利用環保可靠的自行車做為短程通勤工具" },
+      { id: "S2", text: "外出購物時全程自備環保購物袋，力挺台灣每人一年減少丟棄 384 個塑膠袋的目標" },
+      { id: "S3", text: "在每年的 10 月 25 日清潔隊員節，對默默奉獻的環保無名英雄們表達最深摯的感謝" }
+    ],
+    url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E6%B8%85%E6%BD%94%E5%BF%83%E6%B7%A8%E7%92%B0%E4%BF%9D.aspx",
+    hint: "按照時間或節日順序：先出現的是年中「6月3日的自行車日」，接著是平常購物時就要「自備購物袋減少384個塑膠袋」，最後才是年底「10月25日的清潔隊員節」！"
+  }
+];
+
+
+const DOMAIN_META={
+  green:  {label:'花時間草知道', emoji:'🌿'},
+  repair: {label:'羅萊巴伊智綺', emoji:'🔧'},
+  clean:  {label:'清潔心淨環保', emoji:'✨'},
+  house:  {label:'住房樂喜住房', emoji:'🏠'},
+  food:   {label:'饗美食',       emoji:'🍳'},
+};
+// 依 url 自動推斷 domain
+function getDomain(q){
+  const u=q.url||'';
+  if(u.includes('eat'))                          return 'food';
+  if(u.includes('%E8%8A%B1%E6%99%82'))           return 'green';  // 花時間草知道
+  if(u.includes('%E6%B8%85%E6%BD%94'))           return 'clean';  // 清潔心淨環保
+  if(u.includes('%E4%BD%8F%E6%88%BF'))           return 'house';  // 住房樂喜住房
+  if(u.includes('%E7%BE%85%E8%90%8A%E5%B7%B4')) return 'repair'; // 羅萊巴伊智綺
+  return 'green';
+}
+
+const FAST=['超越光速的','打破時空的','快到沒朋友的','用意念通關的','比閃電還快的','秒殺關卡的','連題目都來不及看的','讓系統崩潰的'];
+const MED=['認真研究的','廠區小百科','廣泛涉獵的','穩健前進的','不慌不忙的','笑著通關的','悠哉悠哉的','從容不迫的'];
+const SLOW=['與植物深度對話的','把食譜背了三遍的','和題目培養感情的','細嚼慢嚥的','每道菜都試做了一遍的','把廠區逛了兩圈的','沈浸式體驗的','認識每朵花的'];
+function genTitle(s){const p=s<90?FAST:s<300?MED:SLOW;return p[Math.floor(Math.random()*p.length)];}
+
+const LS_KEY='gsMasterRecords_v5';
+function loadRec(){try{return JSON.parse(localStorage.getItem(LS_KEY)||'[]');}catch(e){return [];}}
+function saveRecLocal(r){const a=loadRec();a.push(r);try{localStorage.setItem(LS_KEY,JSON.stringify(a));}catch(e){}}
+
+// ══ GAS API ══
+async function postScore(rec){
+  if(!GAS_URL||GAS_URL==='YOUR_GAS_URL_HERE')return;
+  try{
+    await fetch(GAS_URL,{method:'POST',mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({company:rec.company,dept:rec.dept,empid:rec.empid,
+        name:rec.name,site:rec.site,score:rec.done,seconds:rec.seconds,
+        prize:rec.prize,tier:rec.tier,title:rec.title,time:rec.time})});
+  }catch(e){console.warn('POST failed',e);}
+}
+async function fetchScores(){
+  if(!GAS_URL||GAS_URL==='YOUR_GAS_URL_HERE')return loadRec();
+  try{
+    const res=await fetch(GAS_URL+'?action=get');
+    const data=await res.json();
+    return Array.isArray(data)?data:loadRec();
+  }catch(e){return loadRec();}
+}
+
+// ══ State ══
+const G={
+  user:{company:'',dept:'',empid:'',name:'',site:''},
+  startTime:null,locked:false,milestoneShown:false,
+  queue:[],qIndex:0,doneCount:0,
+  ingSelected:[],ingWrongCount:0,sortOrder:[],
+  traitOpts:[],traitSelected:[],traitSubmitted:false,traitWrongCount:0,
+};
+
+function shuffle(a){return [...a].sort(()=>Math.random()-.5);}
+function elapsed(){return Math.round((Date.now()-G.startTime)/1000);}
+function fmtTime(s){const m=Math.floor(s/60),r=s%60;return m>0?m+'分'+r+'秒':r+'秒';}
+function $(id){return document.getElementById(id);}
+function ri(html){
+  const el=$('main-panel');
+  if(el)el.innerHTML='<div class="screen">'+html+'</div>';
+  setTimeout(()=>{try{lucide.createIcons();}catch(e){}},10);
+}
+
+// ══ 撒花 ══
+function fireConfetti(){
+  const end=Date.now()+2500;
+  (function frame(){
+    confetti({particleCount:6,angle:60,spread:55,origin:{x:0},colors:['#f97316','#22c55e','#3b82f6','#facc15','#ec4899']});
+    confetti({particleCount:6,angle:120,spread:55,origin:{x:1},colors:['#f97316','#22c55e','#3b82f6','#facc15','#ec4899']});
+    if(Date.now()<end) requestAnimationFrame(frame);
+  })();
+}
+
+// ══ LIVE TIMER ══
+let _timerInterval=null;
+function startLiveTimer(){
+  if(_timerInterval)clearInterval(_timerInterval);
+  _timerInterval=setInterval(()=>{
+    if(!G.startTime){return;}
+    const el=$('live-timer');if(!el)return;
+    const sec=Math.floor((Date.now()-G.startTime)/1000);
+    const m=String(Math.floor(sec/60)).padStart(2,'0');
+    const s=String(sec%60).padStart(2,'0');
+    el.textContent=m+':'+s;
+  },500);
+}
+function stopLiveTimer(){
+  if(_timerInterval){clearInterval(_timerInterval);_timerInterval=null;}
+}
+
+// ══ LOGIN ══
+window.addEventListener('load',()=>{ $('rules-modal').classList.add('show'); });
+function handleSiteChange(){$('site-other-wrap').classList.toggle('hidden',$('l-site').value!=='其他');}
+function submitLogin(){
+  const company=$('l-company').value.trim(),dept=$('l-dept').value.trim(),
+        empid=$('l-empid').value.trim(),name=$('l-name').value.trim(),
+        siteVal=$('l-site').value,siteOther=$('l-site-other').value.trim(),
+        site=siteVal==='其他'?(siteOther||'其他'):siteVal;
+  let ok=true;
+  ['l-company','l-dept','l-empid','l-name','l-site'].forEach(id=>$(id).classList.remove('error'));
+  if(!company){$('l-company').classList.add('error');ok=false;}
+  if(!dept){$('l-dept').classList.add('error');ok=false;}
+  if(!empid){$('l-empid').classList.add('error');ok=false;}
+  if(!name){$('l-name').classList.add('error');ok=false;}
+  if(!siteVal){$('l-site').classList.add('error');ok=false;}
+  if(siteVal==='其他'&&!siteOther){$('l-site-other').classList.add('error');ok=false;}
+  if(!ok){$('login-err').classList.remove('hidden');return;}
+  $('login-err').classList.add('hidden');
+  G.user={company,dept,empid,name,site};
+  G.startTime=Date.now();G.locked=false;G.milestoneShown=false;G.doneCount=0;G.qIndex=0;
+  buildQueue();
+  startLiveTimer();
+  $('login-screen').style.display='none';
+  $('main-game').classList.remove('hidden');
+  $('header-user').textContent=name+' · '+empid+' · '+dept+' · '+site;
+  updateHeader();
+  renderCurrentQ();
+}
+
+// ══ 回首頁（含確認）══
+function confirmGoHome(){
+  if(!G.startTime)return; // 還沒開始遊戲，不需確認
+  const ok=window.confirm('⚠️ 確定要回首頁嗎？目前進度將會清除！');
+  if(ok) goHome();
+}
+// ══ 回首頁 ══
+function goHome(){
+  $('result-modal').classList.remove('show');
+  $('milestone-modal').classList.remove('show');
+  $('main-game').classList.add('hidden');
+  $('login-screen').style.display='flex';
+  // 清空輸入讓下一位玩家重新填
+  ['l-company','l-dept','l-empid','l-name'].forEach(id=>$(id).value='');
+  $('l-site').value='';
+  $('site-other-wrap').classList.add('hidden');
+}
+
+// ══ BUILD QUEUE ══
+// 五大主題：green / repair / clean / house / food
+function buildQueue(){
+  // ── 第1關：從 QB_POEM 隨機抽1題 ──
+  const q1=shuffle([...QB_POEM])[0];
+
+  // ── 第2~8關：從 QB_TRAIT 隨機抽7題（不重複）──
+  const traitPool=shuffle([...QB_TRAIT]);
+  const traitPicks=traitPool.slice(0,7);
+  const [q2,q3,q4,q5,q6,q7,q8]=traitPicks;
+
+  // ── 第9~10關：從 QB_SORT 隨機抽2題（不重複）──
+  const sortPool=shuffle([...QB_SORT]);
+  const [q9,q10]=sortPool.slice(0,2);
+
+  G.queue=[q1,q2,q3,q4,q5,q6,q7,q8,q9,q10];
+}
+
+// ══ DOMAIN TAG ══
+function updateDomainTag(){
+  const wrap=$('domain-tag-wrap');if(!wrap)return;
+  const q=G.queue[G.qIndex];if(!q){wrap.innerHTML='';return;}
+  const m=DOMAIN_META[getDomain(q)]||{};
+  wrap.innerHTML=`<div class="domain-tag">${m.emoji||''} 當前挑戰領域：${m.label||''}</div>`;
+}
+
+// ══ 提示 Box（共用）══
+function hintBox(q){
+  if(!q||!q.hintText)return '';
+  return `<div class="hint-box">
+    <span class="hint-text">💡 ${q.hintText}</span>
+    ${q.hintUrl?`<a href="${q.hintUrl}" target="_blank" class="hint-link">🔗 點我查看 GS Life 詳細資料</a>`:''}
+  </div>`;
+}
+// ══ 收合式提示按鈕（共用）══
+let _hintOpenIdx=-1;
+function hintToggle(q){
+  const isSort=(G.qIndex>=8);
+  if(!isSort&&!q.hint)return '';
+  if(isSort&&!q.url)return '';
+  const isOpen=(_hintOpenIdx===G.qIndex);
+  if(isSort){
+    // 魔王關：只給網址，說去找答案
+    return `<div>
+      <button onclick="toggleHint()" class="w-full text-left text-sm font-bold text-red-500 border border-red-200 bg-red-50 rounded-xl px-4 py-2 hover:bg-red-100 transition-all">
+        🗺️ 逛一下網頁找答案吧！${isOpen?' ▲':' ▼'}
+      </button>
+      ${isOpen?`<div class="bg-red-50 border border-red-200 rounded-xl p-3 mt-2 text-center">
+        <p class="text-sm text-red-600 font-bold mb-2">👀 去這個頁面找找看吧！</p>
+        <a href="${q.url}" target="_blank" class="hint-link">🔗 點我前往 GS Life 頁面</a>
+      </div>`:''}
+    </div>`;
+  }
+  return `<div>
+    <button onclick="toggleHint()" class="w-full text-left text-sm font-bold text-blue-500 border border-blue-200 bg-blue-50 rounded-xl px-4 py-2 hover:bg-blue-100 transition-all">
+      🤫 我就偷偷看一下提示${isOpen?' ▲':' ▼'}
+    </button>
+    ${isOpen?`<div class="hint-box mt-2">
+      <span class="hint-text">💡 ${q.hint}</span>
+      ${q.url?`<a href="${q.url}" target="_blank" class="hint-link">🔗 點我查看 GS Life 詳細資料</a>`:''}
+    </div>`:''}
+  </div>`;
+}
+function toggleHint(){
+  _hintOpenIdx=(_hintOpenIdx===G.qIndex)?-1:G.qIndex;
+  if(G.qIndex===0)         renderPoem();
+  else if(G.qIndex<=7)     renderTrait();
+  else                     renderSort();
+}
+
+// ══ HEADER ══
+function updateHeader(){
+  const done=G.doneCount;
+  let pips='';
+  for(let i=0;i<10;i++) pips+=`<div class="pip ${i<done?'pip-done':'pip-locked'}">${i<done?'✓':i+1}</div>`;
+  $('pip-strip').innerHTML=pips;
+  const fill=$('rbar-fill');if(fill)fill.style.width=Math.round(done/10*100)+'%';
+  const cnt=$('reward-count');if(cnt)cnt.textContent=done+'/10';
+  const rt=$('reward-text');
+  if(rt){
+    if(done>=10)               rt.textContent='🎊 恭喜！集齊10關，可以領取雞排珍奶等級禮物！';
+    else if(done>=5&&G.locked) rt.textContent='🥚 已領取小禮物，通關紀錄已儲存！';
+    else if(done>=5)           rt.textContent='🎁 已達5關！可以領取雞蛋糕等級禮物，或繼續挑戰！';
+    else                       rt.textContent='再完成 '+(5-done)+' 關即可領取雞蛋糕等級禮物！';
+  }
+  updateDomainTag();
+  if(done>=5&&!G.milestoneShown&&!G.locked){
+    G.milestoneShown=true;
+    setTimeout(()=>$('milestone-modal').classList.add('show'),400);
+  }
+}
+
+// ══ MILESTONE ══
+function chooseMilestone(choice){
+  $('milestone-modal').classList.remove('show');
+  if(choice==='stop'){
+    G.locked=true;
+    stopLiveTimer();
+    const sec=elapsed();
+    const rec={company:G.user.company,dept:G.user.dept,empid:G.user.empid,
+      name:G.user.name,site:G.user.site,title:genTitle(sec),
+      done:G.doneCount,prize:'雞蛋糕等級禮物',seconds:sec,
+      time:new Date().toLocaleString('zh-TW'),tier:'small'};
+    saveRecLocal(rec);
+    postScore(rec);
+    showResultModal(rec);
+    // 結算後清空遊戲面板，避免玩家繼續往下按
+    setTimeout(()=>{ if($('main-panel')) $('main-panel').innerHTML=''; },100);
+  }
+  // continue → 關閉 modal，繼續第6~10關
+}
+
+// ══ PROGRESS BAR ══
+function progressBar(color='bg-orange-400'){
+  const tag=G.qIndex>=8?'👹 魔王終極關':G.qIndex>=1?'⚔️ 複選進階關':'🌱 簡單新手關';
+  return `<div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3 mb-4">
+    <div class="flex flex-col leading-tight">
+      <span class="text-sm text-gray-400 font-bold">第 ${G.qIndex+1} / 10 關</span>
+      <span class="text-xs font-bold ${G.qIndex>=8?'text-red-500':G.qIndex>=2?'text-orange-500':'text-green-600'}">${tag}</span>
+    </div>
+    <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+      <div class="h-2 ${color} rounded-full transition-all" style="width:${Math.round(G.qIndex/10*100)}%"></div>
+    </div>
+  </div>`;
+}
+
+// ══ DISPATCH ══
+function renderCurrentQ(){
+  if(G.qIndex>=10||G.qIndex>=G.queue.length){renderAllDone();return;}
+  G.ingSelected=[];G.ingWrongCount=0;G.sortOrder=[];G._sortSel=null;G.traitOpts=[];G.traitSelected=[];G.traitSubmitted=false;G.traitWrongCount=0;
+  updateDomainTag();
+  // 第1關(index=0)=poem，第2~8關(index=1~7)=trait，第9~10關(index=8~9)=sort
+  if(G.qIndex===0)         renderPoem();
+  else if(G.qIndex<=7)     renderTrait();
+  else                     renderSort();
+}
+
+// ══ TYPE: POEM ══
+function renderPoem(){
+  const q=G.queue[G.qIndex];
+  if(!q._popts) q._popts=shuffle([q.answer,...q.decoys]);
+  ri(`<div class="space-y-4">
+    ${progressBar('bg-emerald-500')}
+    <div class="bg-gradient-to-br from-emerald-600 to-green-700 rounded-2xl p-6 text-white text-center">
+      <div class="text-xs opacity-70 mb-3 uppercase tracking-widest">📝 廠區知識單選題</div>
+      <div class="text-base font-bold leading-relaxed bg-white/10 rounded-xl p-4 text-left">${q.question}</div>
+    </div>
+    ${hintToggle(q)}
+    <div class="grid grid-cols-1 gap-3">
+      ${q._popts.map(n=>`<div class="opt-card" data-name="${n}" onclick="poemPick(this.dataset.name)">
+        <span class="text-emerald-500 text-lg flex-shrink-0">💡</span>
+        <span class="font-bold text-base">${n}</span>
+      </div>`).join('')}
+    </div>
+  </div>`);
+}
+function poemPick(name){
+  const q=G.queue[G.qIndex];
+  if(name===q.answer){
+    ri(`<div class="text-center py-6 space-y-4">
+      <div class="text-5xl pop">🎉</div>
+      <h2 class="text-xl font-black text-emerald-700">答對了！</h2>
+      <p class="text-gray-500 text-base">正確答案：<span class="font-black text-emerald-600">${name}</span></p>
+      ${q.url?`<a href="${q.url}" target="_blank" class="hint-link block text-center">🔗 查看 GS Life 詳細資料</a>`:''}
+      <button class="btn-primary w-full py-3 text-base" onclick="completeQ()">下一關 →</button>
+    </div>`);
+  } else {
+    document.querySelectorAll('#main-panel .opt-card').forEach(el=>{
+      if(el.dataset.name===name){el.classList.add('opt-wrong');setTimeout(()=>el.classList.remove('opt-wrong'),500);}
+    });
+    // 選錯：打亂選項順序
+    q._popts=shuffle(q._popts);
+    setTimeout(()=>renderPoem(),520);
+  }
+}
+
+// ══ TYPE: INGREDIENT ══
+function renderIngredient(){
+  const q=G.queue[G.qIndex];
+  if(!q._opts) q._opts=shuffle([...q.correct,...q.wrong]);
+  const sel=G.ingSelected;
+  // 只計算「已確認正確」的
+  const correctPicked=sel.filter(i=>q.correct.includes(i));
+  const correctCount=correctPicked.length;
+  const allDone=correctCount===q.correct.length;
+  ri(`<div class="space-y-4">
+    ${progressBar('bg-orange-400')}
+    <div class="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-5 text-white">
+      <div class="text-xs opacity-75 mb-1">${q.chef} 廚師</div>
+      <div class="text-2xl font-black mb-1">${q.emoji} ${q.name}</div>
+      <div class="text-base opacity-85">找出屬於這道菜的 <strong>${q.correct.length} 個食材</strong>！</div>
+    </div>
+    ${hintBox(q)}
+    <div class="grid grid-cols-2 gap-3">
+      ${q._opts.map(ing=>{
+        const picked=correctPicked.includes(ing);
+        // 只顯示已正確選到的綠色，其他保持原樣（錯的已被從sel移除）
+        let cls='opt-card';
+        if(picked)cls+=' opt-correct pop';
+        return `<div class="${cls}" data-ing="${ing}" onclick="ingPick(this.dataset.ing)">${picked?'✅':'🥬'} ${ing}</div>`;
+      }).join('')}
+    </div>
+    <div class="text-center text-base text-orange-500 font-bold">已找到 ${correctCount} / ${q.correct.length} 個正確食材</div>
+    ${allDone?`<div class="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+      <div class="text-2xl mb-2">🎉</div>
+      <p class="font-bold text-green-700 mb-2 text-base">完美！全部找對了！</p>
+      <div class="bg-orange-50 border border-orange-200 rounded-xl p-3 text-sm text-orange-700 mb-3">💡 ${q.tip}</div>
+      <button class="btn-orange" onclick="completeQ()">下一關 →</button>
+    </div>`:''}
+  </div>`);
+}
+// 共用盲猜提示彈窗
+function showBlindGuessModal(hintUrl){
+  if($('blindguess-modal'))return; // 已存在就不再疊加
+  const linkHtml=hintUrl
+    ?`<a href="${hintUrl}" target="_blank" style="display:inline-block;margin-top:10px;color:#1d4ed8;font-weight:700;text-decoration:underline;font-size:.95rem;">🔗 點我去看 SharePoint 提示！</a>`
+    :'';
+  const overlay=document.createElement('div');
+  overlay.id='blindguess-modal';
+  overlay.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML=`<div style="background:#fff;border-radius:20px;padding:30px 24px;max-width:380px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4);">
+    <div style="font-size:2.8rem;margin-bottom:12px;">🙈</div>
+    <div style="font-size:1.15rem;font-weight:900;color:#dc2626;margin-bottom:8px;">不要再盲猜啦！</div>
+    <div style="font-size:.93rem;color:#374151;line-height:1.75;margin-bottom:6px;">看看提示，去 SharePoint 找答案再來！</div>
+    ${linkHtml}
+    <div style="margin-top:20px;">
+      <button id="blindguess-close-btn" style="background:linear-gradient(135deg,#2d6a4f,#40916c);color:#fff;border:none;border-radius:10px;padding:12px 30px;font-weight:700;font-size:1rem;cursor:pointer;width:100%;">好！我去查一下，回來繼續 👀</button>
+    </div>
+    <div style="margin-top:10px;font-size:.78rem;color:#9ca3af;">（點擊背景或此按鈕可關閉，繼續作答）</div>
+  </div>`;
+  document.body.appendChild(overlay);
+  // 按鈕關閉
+  overlay.querySelector('#blindguess-close-btn').addEventListener('click',()=>overlay.remove());
+  // 點背景關閉
+  overlay.addEventListener('click',(e)=>{if(e.target===overlay)overlay.remove();});
+}
+function ingPick(ing){
+  const q=G.queue[G.qIndex];
+  // 已正確選過的不可再點
+  if(G.ingSelected.includes(ing))return;
+  const ok=q.correct.includes(ing);
+  if(ok){
+    G.ingSelected.push(ing);
+    renderIngredient();
+  } else {
+    // 錯誤：只標紅震動，不加入 selected，不顯示正確答案
+    G.ingWrongCount=(G.ingWrongCount||0)+1;
+    // 找到對應的 DOM 元素並加上震動紅色
+    const cards=document.querySelectorAll('#main-panel .opt-card');
+    cards.forEach(el=>{
+      if(el.dataset.ing===ing){
+        el.classList.add('opt-wrong');
+        setTimeout(()=>el.classList.remove('opt-wrong'),500);
+      }
+    });
+    // 錯3次：彈窗提示
+    if(G.ingWrongCount>=3){
+      G.ingWrongCount=0;
+      setTimeout(()=>showBlindGuessModal(q.url||''),50);
+    }
+  }
+}
+
+// ══ TYPE: TRAIT ══
+function renderTrait(){
+  const q=G.queue[G.qIndex];
+  const needCount=q.traits?Math.min(2,q.traits.length):2;
+  if(G.traitOpts.length===0){
+    const c=shuffle(q.traits).slice(0,needCount),w=shuffle(q.wrongTraits).slice(0,needCount);
+    G.traitOpts=shuffle([...c,...w]);
+  }
+  const domainLabel=q.domain==='food'?'食譜題':'廠區植物';
+  const domainIcon=q.domain==='food'?'🍳':'🌿';
+  ri(`<div class="space-y-4">
+    ${progressBar('bg-green-500')}
+    <div class="bg-gradient-to-br from-green-600 to-emerald-700 rounded-2xl p-5 text-white text-center">
+      <div class="text-xs opacity-70 mb-2 uppercase tracking-widest">✅ 廠區知識複選題</div>
+      <div class="text-base font-bold leading-relaxed bg-white/10 rounded-xl p-3 text-left mt-1">${q.question}</div>
+    </div>
+    ${hintToggle(q)}
+    <p class="text-base font-bold text-gray-600 text-center">請選出 <strong>${needCount} 個</strong>正確答案</p>
+    <div id="trait-opts" class="grid grid-cols-1 gap-3">
+      ${G.traitOpts.map((trait,i)=>{
+        const isSel=G.traitSelected.includes(trait);
+        return `<div class="opt-card${isSel?' border-emerald-400 bg-emerald-50':''}" data-idx="${i}">
+          <div class="trait-circle${isSel?' selected':''}">${isSel?'✓':''}</div>
+          <span class="text-base">${trait}</span>
+        </div>`;
+      }).join('')}
+    </div>
+    <button class="btn-primary w-full py-3 text-base" onclick="traitSubmit()">確認答案！</button>
+    <div id="trait-result"></div>
+  </div>`);
+  setTimeout(()=>{
+    const c=$('trait-opts');if(!c)return;
+    c.querySelectorAll('.opt-card').forEach(card=>{
+      card.addEventListener('click',()=>traitToggle(parseInt(card.dataset.idx)));
+    });
+  },20);
+}
+function traitToggle(i){
+  if(G.traitSubmitted)return;
+  const q=G.queue[G.qIndex];
+  const needCount=q.traits?Math.min(2,q.traits.length):2;
+  const trait=G.traitOpts[i];if(!trait)return;
+  const idx=G.traitSelected.indexOf(trait);
+  if(idx>=0)G.traitSelected.splice(idx,1);
+  else if(G.traitSelected.length<needCount)G.traitSelected.push(trait);
+  renderTrait();
+}
+function traitSubmit(){
+  const q=G.queue[G.qIndex];
+  const needCount=q.traits?Math.min(2,q.traits.length):2;
+  if(G.traitSelected.length<needCount){
+    const r=$('trait-result');
+    if(r){r.textContent=`請先選擇 ${needCount} 個特性！`;r.className='text-red-500 text-center font-bold mt-2';}
+    return;
+  }
+  const correct=G.traitSelected.every(t=>q.traits.includes(t));
+  const c=$('trait-opts');
+  if(correct){
+    // 全對：切換成乾淨答對畫面
+    G.traitSubmitted=true;
+    const correctList=q.traits.slice(0,2).map(t=>`<div class="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2 text-emerald-700 font-bold text-sm">✅ ${t}</div>`).join('');
+    ri(`<div class="text-center py-6 space-y-4">
+      <div class="text-5xl pop">🎉</div>
+      <h2 class="text-xl font-black text-emerald-700">答對了！</h2>
+      <div class="text-left space-y-2">${correctList}</div>
+      ${q.hint?`<div class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-left text-sm text-blue-800"><span class="font-black">💡 小知識：</span>${q.hint}</div>`:''}
+      ${q.url?`<a href="${q.url}" target="_blank" class="hint-link block text-center">🔗 查看 GS Life 詳細資料</a>`:''}
+      <div id="next-btn-wrap" class="w-full">
+        <div id="next-countdown" class="text-gray-400 text-sm font-bold py-3">請稍候 <span id="next-count">3</span> 秒…</div>
+      </div>
+    </div>`);
+    let cnt=3;
+    const iv=setInterval(()=>{
+      cnt--;
+      const el=$('next-count');
+      if(el)el.textContent=cnt;
+      if(cnt<=0){
+        clearInterval(iv);
+        const wrap=$('next-btn-wrap');
+        if(wrap)wrap.innerHTML='<button class="btn-primary w-full py-3 text-base" onclick="completeQ()">下一關 →</button>';
+      }
+    },1000);
+    return;
+  } else {
+    // 選錯：標紅震動錯誤選項
+    G.traitWrongCount=(G.traitWrongCount||0)+1;
+    if(c){
+      c.querySelectorAll('.opt-card').forEach(card=>{
+        const trait=G.traitOpts[parseInt(card.dataset.idx)];
+        const wasSel=G.traitSelected.includes(trait);
+        const isWrong=!q.traits.includes(trait);
+        if(wasSel&&isWrong){
+          card.classList.add('opt-wrong');
+          setTimeout(()=>card.classList.remove('opt-wrong'),500);
+        }
+      });
+    }
+    // 清空已選，打亂選項順序，重新渲染
+    setTimeout(()=>{
+      G.traitSelected=[];
+      G.traitOpts=shuffle(G.traitOpts); // 打亂選項
+      renderTrait();
+    },560);
+
+    // 錯3次：彈窗提示
+    if(G.traitWrongCount>=3){
+      G.traitWrongCount=0;
+      setTimeout(()=>showBlindGuessModal(q.url||''),100);
+    }
+  }
+}
+
+// ══ TYPE: SORT（拖曳排序）══
+function renderSort(){
+  const q=G.queue[G.qIndex];
+  if(G.sortOrder.length===0)G.sortOrder=shuffle(q.steps).map(s=>s.id);
+  _renderSortUI();
+}
+function _renderSortUI(){
+  const q=G.queue[G.qIndex];
+  const ordered=G.sortOrder.map(id=>q.steps.find(s=>s.id===id));
+  ri(`<div class="space-y-4">
+    ${progressBar('bg-red-400')}
+    <div class="bg-gradient-to-r from-red-600 to-orange-600 rounded-2xl p-5 text-white">
+      <div class="text-xs opacity-75 mb-1">👹 魔王排序關</div>
+      <div class="text-lg font-black mb-2">${q.title}</div>
+      <div class="text-sm opacity-90 leading-relaxed bg-white/10 rounded-xl p-3">${q.question}</div>
+    </div>
+    ${hintToggle(q)}
+    <div class="text-xs text-gray-400 text-center font-bold">☝️ 長按拖曳卡片到正確位置</div>
+    <div id="sort-list" class="flex flex-col gap-2">
+      ${ordered.map((st,i)=>`
+        <div class="step-card" draggable="true" data-id="${st.id}">
+          <div class="step-num">${i+1}</div>
+          <div class="text-sm text-gray-700 leading-relaxed flex-1">${st.text}</div>
+          <span style="color:#d1d5db;font-size:1rem;flex-shrink:0;">☰</span>
+        </div>`).join('')}
+    </div>
+    <div class="flex gap-2">
+      <button class="btn-secondary flex-1 py-3" onclick="G.sortOrder=[];renderSort()">🔀 重新打亂</button>
+      <button class="btn-red flex-1 py-3" onclick="checkSort()">✅ 確認順序！</button>
+    </div>
+    <div id="sort-result"></div>
+  </div>`);
+  // 初始化拖曳
+  setTimeout(()=>initSortDrag(),30);
+}
+function initSortDrag(){
+  const list=$('sort-list');if(!list)return;
+  let dragSrc=null;
+  list.querySelectorAll('.step-card').forEach(card=>{
+    card.addEventListener('dragstart',e=>{
+      dragSrc=card;
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed='move';
+    });
+    card.addEventListener('dragend',()=>{
+      card.classList.remove('dragging');
+      list.querySelectorAll('.step-card').forEach(c=>c.classList.remove('dg-top','dg-bot'));
+    });
+    card.addEventListener('dragover',e=>{
+      e.preventDefault();
+      if(!dragSrc||dragSrc===card)return;
+      const rect=card.getBoundingClientRect();
+      const mid=rect.top+rect.height/2;
+      list.querySelectorAll('.step-card').forEach(c=>c.classList.remove('dg-top','dg-bot'));
+      card.classList.add(e.clientY<mid?'dg-top':'dg-bot');
+    });
+    card.addEventListener('drop',e=>{
+      e.preventDefault();
+      if(!dragSrc||dragSrc===card)return;
+      const rect=card.getBoundingClientRect();
+      const mid=rect.top+rect.height/2;
+      const before=e.clientY<mid;
+      list.insertBefore(dragSrc,before?card:card.nextSibling);
+      // 同步更新 G.sortOrder
+      G.sortOrder=[...list.querySelectorAll('.step-card')].map(c=>c.dataset.id);
+      // 更新序號顯示
+      list.querySelectorAll('.step-card').forEach((c,i)=>{
+        const n=c.querySelector('.step-num');if(n)n.textContent=i+1;
+      });
+      list.querySelectorAll('.step-card').forEach(c=>c.classList.remove('dg-top','dg-bot'));
+    });
+  });
+}
+function checkSort(){
+  const q=G.queue[G.qIndex];
+  const correct=JSON.stringify(G.sortOrder)===JSON.stringify(q.steps.map(s=>s.id));
+  const res=$('sort-result');if(!res)return;
+  if(correct){
+    ri(`<div class="text-center py-6 space-y-4">
+      <div class="text-5xl pop">🎉</div>
+      <h2 class="text-xl font-black text-red-600">答對了！順序完全正確！</h2>
+      <div class="text-left space-y-2">
+        ${q.steps.map((s,i)=>`<div class="bg-red-50 border border-red-200 rounded-xl px-4 py-2 text-red-700 font-bold text-sm">✅ ${i+1}. ${s.text}</div>`).join('')}
+      </div>
+      ${q.hint?`<div class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-left text-sm text-blue-800"><span class="font-black">💡 小知識：</span>${q.hint}</div>`:''}
+      ${q.url?`<a href="${q.url}" target="_blank" class="hint-link block text-center">🔗 查看 GS Life 詳細資料</a>`:''}
+      <button class="btn-orange w-full py-3 text-base" onclick="completeQ()">完成 🏆</button>
+    </div>`);
+    return;
+  } else {
+    const cnt=G.sortOrder.filter((id,i)=>id===q.steps[i].id).length;
+    res.innerHTML=`<div class="bg-orange-50 border border-orange-200 rounded-xl p-4 text-center">
+      <p class="font-bold text-orange-700 text-base">有 ${cnt}/${q.steps.length} 個步驟在正確位置，再拖看看？</p>
+      <div class="flex gap-2 justify-center mt-3 flex-wrap">
+        <button class="btn-secondary" onclick="G.sortOrder=[];G._sortSel=null;renderSort()">重新打亂</button>
+        <button class="btn-orange" onclick="completeQ()">接受結果 →</button>
+      </div></div>`;
+    res.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+}
+
+// ══ COMPLETE Q ══
+function completeQ(){
+  if(G.queue[G.qIndex]){delete G.queue[G.qIndex]._opts;delete G.queue[G.qIndex]._popts;}
+  G.doneCount++;
+  G.qIndex++;
+  updateHeader();
+  // 嚴格擋住第11關以後
+  if(G.locked)return;
+  if(G.doneCount>=10||G.qIndex>=10){renderAllDone();return;}
+  renderCurrentQ();
+}
+
+// ══ ALL DONE（10關完成）══
+function renderAllDone(){
+  if(G.locked)return;
+  G.locked=true;
+  stopLiveTimer();
+  const sec=elapsed();
+  const rec={company:G.user.company,dept:G.user.dept,empid:G.user.empid,
+    name:G.user.name,site:G.user.site,title:genTitle(sec),
+    done:10,prize:'雞排珍奶等級禮物',seconds:sec,
+    time:new Date().toLocaleString('zh-TW'),tier:'legend'};
+  saveRecLocal(rec);
+  postScore(rec);
+  // 清空遊戲面板
+  if($('main-panel'))$('main-panel').innerHTML='';
+  // 大撒花！
+  fireConfetti();
+  showResultModal(rec);
+}
+
+// ══ RESULT MODAL ══
+async function showResultModal(rec){
+  const isL=rec.tier==='legend';
+  const content=$('result-modal-content');
+  content.innerHTML=`
+    <div class="bg-gradient-to-br ${isL?'from-emerald-500 to-green-700':'from-amber-400 to-orange-500'} rounded-2xl p-6 text-white mb-4">
+      <div class="text-5xl mb-2 pop">${isL?'🍗':'🥚'}</div>
+      <h1 class="text-2xl font-black mb-1">${isL?'🎊 傳奇達成！':'🎉 通關完成！'}</h1>
+      <div class="text-base font-bold opacity-90">「${rec.title}」${rec.name}</div>
+      <div class="text-sm opacity-75 mt-1">${rec.site}</div>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-4 text-left space-y-2 mb-4">
+      <div class="flex justify-between text-base"><span class="text-gray-500">通關關數</span><strong>${rec.done}/10 關</strong></div>
+      <div class="flex justify-between text-base"><span class="text-gray-500">完成時間</span><strong>${fmtTime(rec.seconds)}</strong></div>
+      <div class="flex justify-between text-base"><span class="text-gray-500">獎項</span>
+        <strong class="${isL?'text-emerald-600':'text-amber-600'}">${rec.prize} ${isL?'🍗':'🥚'}</strong></div>
+    </div>
+    <div class="bg-amber-50 border-2 border-dashed border-amber-300 rounded-xl p-3 mb-4">
+      <div class="font-black text-amber-800 text-base">📸 請截圖保留通關畫面（不需傳給工作人員），若後續獎項發放有爭議時，才方便提供比對唷！</div>
+      <div class="text-xs text-amber-600 mt-1">${rec.empid} · ${rec.dept} · ${rec.company}</div>
+    </div>
+    <div class="font-bold text-gray-700 mb-2 text-base">🏆 即時排行榜</div>
+    <div style="margin-bottom:8px;">
+      <div style="background:#fef3c7;border:1.5px solid #fde68a;border-radius:10px;padding:7px 10px;text-align:center;margin-bottom:8px;font-weight:800;color:#92400e;font-size:.82rem;">🥚 5關組 Top 10</div>
+      <div id="result-lb-5"><p class="text-gray-400 text-sm text-center py-2">載入中…</p></div>
+    </div>
+    <div style="margin-bottom:16px;">
+      <div style="background:#d1fae5;border:1.5px solid #a7f3d0;border-radius:10px;padding:7px 10px;text-align:center;margin-bottom:8px;font-weight:800;color:#065f46;font-size:.82rem;">🍗 10關組 Top 10</div>
+      <div id="result-lb-10"><p class="text-gray-400 text-sm text-center py-2">載入中…</p></div>
+    </div>
+    <div class="flex gap-2">
+      <button class="btn-secondary flex-1 py-3" onclick="goHome()">🏠 返回首頁</button>
+      <button class="btn-primary flex-1 py-3" onclick="$('result-modal').classList.remove('show')">關閉</button>
+    </div>
+  `;
+  $('result-modal').classList.add('show');
+  const all=await fetchScores();
+  renderLbList('result-lb-5',all,10,'small',null);
+  renderLbList('result-lb-10',all,10,'legend',null);
+}
+
+// ══ LB MODAL ══
+async function openLbModal(){
+  $('lb-modal-list-5').innerHTML='<p class="text-gray-400 text-sm text-center py-4">載入中…</p>';
+  $('lb-modal-list-10').innerHTML='<p class="text-gray-400 text-sm text-center py-4">載入中…</p>';
+  $('lb-modal').classList.add('show');
+  const all=await fetchScores();
+  renderLbList('lb-modal-list-5',all,20,'small','lb-modal-more-5-wrap');
+  renderLbList('lb-modal-list-10',all,20,'legend','lb-modal-more-10-wrap');
+}
+
+// ══ RENDER LB LIST ══
+function lbRow(r, i){
+  const cls=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-n';
+  const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+  const dept=r.dept||r.site||'';
+  const displayName=`「${r.title||''}」的GS ${r.name}`;
+  return `<div class="lb-row ${i<3?'border-yellow-300 bg-yellow-50':''}">
+    <div class="lb-rank ${cls}">${medal||i+1}</div>
+    <div class="flex-1 min-w-0">
+      <div class="font-bold text-gray-800 text-sm">${displayName}</div>
+      <div class="text-xs text-gray-400">${dept} · ${r.empid||''}</div>
+    </div>
+    <div class="text-right flex-shrink-0">
+      <div class="text-sm font-bold text-gray-700">${r.done||r.score||0} 關</div>
+      <div class="text-xs text-gray-400">${fmtTime(r.seconds)}</div>
+    </div>
+  </div>`;
+}
+function renderLbList(containerId, records, limit, tierFilter, moreWrapperId){
+  const el=$(containerId);if(!el)return;
+  if(!records||records.length===0){el.innerHTML='<p class="text-gray-400 text-sm text-center py-3">尚無紀錄</p>';return;}
+  const filtered=tierFilter?records.filter(r=>r.tier===tierFilter):records;
+  const sorted=[...filtered].sort((a,b)=>(b.done||b.score||0)-(a.done||a.score||0)||(a.seconds-b.seconds));
+  if(sorted.length===0){el.innerHTML='<p class="text-gray-400 text-sm text-center py-3">尚無紀錄</p>';return;}
+  const top=sorted.slice(0,limit);
+  el.innerHTML=top.map((r,i)=>lbRow(r,i)).join('');
+  // 展開21~30按鈕
+  if(moreWrapperId){
+    const moreEl=$(moreWrapperId);
+    if(moreEl){
+      const extra=sorted.slice(limit, limit+10);
+      if(extra.length>0){
+        moreEl.innerHTML=`<button id="btn-more-${moreWrapperId}" onclick="expandLb('${containerId}','${moreWrapperId}')" class="btn-secondary w-full py-2 text-sm mt-1">▼ 顯示第 ${limit+1}～${Math.min(limit+extra.length,limit+10)} 名</button>`;
+        moreEl._extra=extra;
+        moreEl._offset=limit;
+      } else {
+        moreEl.innerHTML='';
+      }
+    }
+  }
+}
+function expandLb(containerId, moreWrapperId){
+  const el=$(containerId), moreEl=$(moreWrapperId);if(!el||!moreEl)return;
+  const extra=moreEl._extra||[];
+  const offset=moreEl._offset||20;
+  el.innerHTML+=extra.map((r,i)=>lbRow(r,offset+i)).join('');
+  moreEl.innerHTML='';
+}
+
+
+</script>
+</body>
+</html>
