@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>廠區全能大師</title>
+<title>GS Life廠區全能大師</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
@@ -105,7 +105,7 @@ document.addEventListener('keydown',e=>{
     </div>
 
     <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-4 text-sm leading-relaxed text-emerald-900">
-      <div class="font-black text-base mb-2">👋 歡迎來當廠區全能大師！！</div>
+      <div class="font-black text-base mb-2">👋 歡迎來當GS Life廠區全能大師！！</div>
       <p class="mb-2">透過 <strong>GS Life</strong> 讓你從廠區小白一路打怪升級，解鎖五大知識領域，挑戰自己對廠區的了解極限！準備好了嗎？</p>
       <div class="mt-3 space-y-2">
         <div class="flex items-start gap-2"><span class="text-lg">🌿</span><div><strong>花時間草知道</strong>：廠區裡藏著哪些植物？花語、特色、季節通通考你！</div></div>
@@ -168,7 +168,7 @@ document.addEventListener('keydown',e=>{
   <div class="login-card">
     <div class="text-center mb-6">
       <div class="text-5xl mb-3">🏭</div>
-      <h1 class="text-2xl font-black text-gray-800 mb-1">廠區全能大師</h1>
+      <h1 class="text-2xl font-black text-gray-800 mb-1">GS Life廠區全能大師</h1>
       <p class="text-gray-500 text-sm mt-1">GS Life 廠區知識大挑戰</p>
       <button class="btn-orange w-full mt-4 py-3 text-base" onclick="$('rules-modal').classList.add('show')">📜 查看遊戲規則 &amp; 獎品說明</button>
     </div>
@@ -254,7 +254,7 @@ document.addEventListener('keydown',e=>{
       </div>
       <div class="flex items-center justify-between mb-2">
         <div>
-          <h1 class="font-black text-gray-800 text-lg cursor-pointer hover:text-emerald-600 transition-colors" onclick="confirmGoHome()">🏭 廠區全能大師</h1>
+          <h1 class="font-black text-gray-800 text-lg cursor-pointer hover:text-emerald-600 transition-colors" onclick="confirmGoHome()">🏭 GS Life廠區全能大師</h1>
           <p id="header-user" class="text-xs text-gray-400 mt-0.5"></p>
         </div>
         <div class="flex items-center gap-2">
@@ -289,7 +289,7 @@ document.addEventListener('keydown',e=>{
 // ══════════════════════════════════════
 
 // 第1~2題：單選（poem）── 誇張搞笑選項
-// warmup:true 表示這題一定會被排到第1關（暖身用），難度最低、選項最搞笑
+// warmup:true 表示這題一定會被排到第1關（暖身用）
 const QB_POEM = [
   {
     id: "QB_POEM_01",
@@ -306,7 +306,7 @@ const QB_POEM = [
     answer: "1,752 元",
     decoys: ["1,200 元", "2,400 元", "3,650 元"],
     url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E7%BE%85%E8%90%8A%E5%B7%B4%E4%BC%8A%E6%99%BA%E7%B6%BA.aspx",
-    hint: "這個四位數是由 1、7、5、2 組成",
+    hint: "這個四位數是由 2、1、7、5 組成",
     hard: true
   },
   {
@@ -355,7 +355,7 @@ const QB_POEM = [
     id: "QB_POEM_08",
     question: "製作「麻婆豆腐」時，豬絞肉的備料重量是多少？",
     answer: "150g",
-    decoys: ["250g", "350g", "500g"],
+    decoys: ["250g", "350ml", "500kg"],
     url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/eat.aspx",
     hint: "數字是一百五十，計量單位是克（g）",
     hard: true
@@ -372,9 +372,9 @@ const QB_POEM = [
     id: "QB_POEM_10",
     question: "台灣每人一年約莫丟棄多少個塑膠袋？",
     answer: "384 個",
-    decoys: ["184 個", "584 個", "784 個"],
+    decoys: ["5 個", "666 個", "777 個"],
     url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E6%B8%85%E6%BD%94%E5%BF%83%E6%B7%A8%E7%92%B0%E4%BF%9D.aspx",
-    hint: "一個三位數，由 3、8、4 組成",
+    hint: "接近一天一個了",
     hard: true
   },
   {
@@ -425,7 +425,7 @@ const QB_POEM = [
     answer: "600 公克",
     decoys: ["300 公克", "450 公克", "800 公克"],
     url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/eat.aspx",
-    hint: "數字為六百，等於傳統市場的一台斤分量",
+    hint: "等於傳統市場的一台斤分量",
     hard: true
   },
   {
@@ -449,7 +449,7 @@ const QB_POEM = [
     id: "QB_POEM_19",
     question: "蘭嶼地下屋屋前像巨型墓碑的「背靠石」，原文稱為什麼？",
     answer: "Tagakal",
-    decoys: ["Vahay", "Tatala", "Makarama"],
+    decoys: ["Vahay", "Tesla", "Makarama"],
     url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/%E4%BD%8F%E6%88%BF%E6%A8%82%E5%96%9C%E4%BD%8F%E6%88%BF.aspx",
     hint: "這是達悟族人的露天客廳與靈魂倚靠處"
   },
@@ -508,7 +508,7 @@ const QB_POEM = [
     id: "QB_POEM_26",
     question: "製作「爆炒透抽」時，透抽的備料重量是多少？",
     answer: "400g",
-    decoys: ["200g", "300g", "500g"],
+    decoys: ["200kg", "300g", "500kg"],
     url: "https://hetw.sharepoint.com/sites/GSlife/SitePages/eat.aspx",
     hint: "數字為四百，單位是克（g）",
     hard: true
